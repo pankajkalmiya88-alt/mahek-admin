@@ -10,8 +10,8 @@ import { sidebarData } from "./sidebar-data";
 
 const data = {
   user: {
-    name: "Admin Shule",
-    email: "admin@shule.com",
+    name: "Admin Mahek",
+    email: "admin@mahek.com",
     avatar: userAvatar,
   },
 };

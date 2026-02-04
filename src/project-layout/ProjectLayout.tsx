@@ -25,7 +25,7 @@ export default function Page() {
               <BreadcrumbList className="text-sm font-medium text-gray-900 gap-1.5">
                 <BreadcrumbItem>
                   <BreadcrumbLink href="#" className="text-gray-700 hover:text-gray-900 transition-colors">
-                    Shule Direct
+                    Mahek Admin
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="text-gray-500">

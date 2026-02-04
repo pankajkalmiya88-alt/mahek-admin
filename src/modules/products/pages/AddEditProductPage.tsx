@@ -188,10 +188,11 @@ const AddEditProductPage = () => {
                               <SelectValue placeholder="All" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="All">All</SelectItem>
-                              <SelectItem value="Men">Men</SelectItem>
-                              <SelectItem value="Women">Women</SelectItem>
-                              <SelectItem value="Kids">Kids</SelectItem>
+                              <SelectItem value="banarasi sarees">Banarasi Sarees</SelectItem>
+                              <SelectItem value="sarees">Sarees</SelectItem>
+                              <SelectItem value="lehenga">Lehenga</SelectItem>
+                              <SelectItem value="rajputi poshak">Rajputi Poshak</SelectItem>
+                              <SelectItem value="bridal lehenga">Bridal Lehenga</SelectItem>
                             </SelectContent>
                           </Select>
                           {isInvalid && (

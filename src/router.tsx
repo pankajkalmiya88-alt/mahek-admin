@@ -19,6 +19,7 @@ const DashboardPage = lazy(() => import("./modules/shared-modules/pages/Dashboar
 const ProductLayout = lazy(() => import("./modules/products/layouts/ProductsLayout"));
 const ProductListPage = lazy(() => import("./modules/products/pages/ProductsListPage"));
 const AddEditProductPage = lazy(() => import("./modules/products/pages/AddEditProductPage"));
+const ProductDetailPage = lazy(() => import("./modules/products/pages/ProductDetailPage"));
 
 // ===== Reusable Suspense Wrapper =====
 const withSuspense = (Component: any) => (
@@ -59,7 +60,8 @@ export const router = createBrowserRouter([
           // { path: "products", element: withSuspense(ProductListPage) },
           { index: true, element: withSuspense(ProductListPage) },
           { path: 'add-product', element: withSuspense(AddEditProductPage) },
-          { path: 'edit-product/:id', element: withSuspense(AddEditProductPage) }
+          { path: 'edit-product/:id', element: withSuspense(AddEditProductPage) },
+          { path: 'detail/:id', element: withSuspense(ProductDetailPage) }
 
         ]
       }
