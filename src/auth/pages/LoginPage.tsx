@@ -22,8 +22,11 @@ const LoginPage = () => {
   const mutation = useMutation({
     mutationFn: login,
     onSuccess: (data: any) => {
-      const userData = data?.data?.data?.user;
+      console.log('data: ', data);
+      const userData = data?.data?.admin;
+      console.log('userData: ', userData);
       const token = data?.headers?.authorization;
+      console.log('token: ', token);
       setToken(token);
       setUserDetails(userData);
       showSuccess('Welcome to dashboard');

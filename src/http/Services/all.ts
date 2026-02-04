@@ -5,7 +5,7 @@ import { api } from '@/http/api';
  *
  * @param {string} [queryString] - Optional query string beginning with `?`.
  */
-export const getProductsList = async (queryString = '') => api.get(`candidates/admin/products/${queryString}`);
+export const getProductsList = async (queryString = '') => api.get(`products/${queryString}`);
 
 
 /**

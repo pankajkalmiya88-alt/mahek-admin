@@ -16,14 +16,30 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import StarRating from "@/components/ui/star-rating";
 import ProductPreview from "./addTimePreview";
 
 const availableSizes = ["S", "M", "L", "XL", "XXL", "XXXL"];
+const availableColors = [
+  { name: "Red", value: "#EF4444" },
+  { name: "Blue", value: "#3B82F6" },
+  { name: "Green", value: "#10B981" },
+  { name: "Yellow", value: "#F59E0B" },
+  { name: "Purple", value: "#8B5CF6" },
+  { name: "Pink", value: "#EC4899" },
+  { name: "Black", value: "#000000" },
+  { name: "White", value: "#FFFFFF" },
+  { name: "Gray", value: "#6B7280" },
+  { name: "Orange", value: "#F97316" },
+];
 
 const AddEditProductPage = () => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>(["S"]);
   const [imageInputs, setImageInputs] = useState<string[]>([""]);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [customColorInput, setCustomColorInput] = useState("");
   
   // State for live preview
   const [previewData, setPreviewData] = useState({
@@ -35,6 +51,9 @@ const AddEditProductPage = () => {
     images: [""],
     description: "",
     isVisible: true,
+    rating: 0,
+    discount: 0,
+    colors: [] as string[],
   });
 
   const form = useForm({
@@ -47,6 +66,9 @@ const AddEditProductPage = () => {
       images: [""],
       description: "",
       isVisible: true,
+      rating: 0,
+      discount: 0,
+      colors: [] as string[],
     },
     onSubmit: async ({ value }) => {
       console.log("Form Values:", value);
@@ -84,6 +106,33 @@ const AddEditProductPage = () => {
     setImageInputs(newImages);
     form.setFieldValue("images", newImages);
     setPreviewData({ ...previewData, images: newImages });
+  };
+
+  const addColor = (color: string) => {
+    if (!selectedColors.includes(color)) {
+      const newColors = [...selectedColors, color];
+      setSelectedColors(newColors);
+      form.setFieldValue("colors", newColors);
+      setPreviewData({ ...previewData, colors: newColors });
+    }
+  };
+
+  const removeColor = (color: string) => {
+    const newColors = selectedColors.filter((c) => c !== color);
+    setSelectedColors(newColors);
+    form.setFieldValue("colors", newColors);
+    setPreviewData({ ...previewData, colors: newColors });
+  };
+
+  const addCustomColor = () => {
+    const color = customColorInput.trim();
+    if (color && !selectedColors.includes(color)) {
+      const newColors = [...selectedColors, color];
+      setSelectedColors(newColors);
+      form.setFieldValue("colors", newColors);
+      setPreviewData({ ...previewData, colors: newColors });
+      setCustomColorInput("");
+    }
   };
 
   return (
@@ -262,53 +311,140 @@ const AddEditProductPage = () => {
                 </div>
               </div>
 
-              {/* Stock Count */}
+              {/* Stock Count and Discount Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Stock Count */}
+                <div className="space-y-2">
+                  <form.Field
+                    name="stockCount"
+                    validators={{
+                      onChange: z
+                        .string()
+                        .min(1, "Stock count is required")
+                        .refine(
+                          (val) =>
+                            !isNaN(Number(val)) && Number(val) >= 0,
+                          "Stock count must be a valid number"
+                        ),
+                    }}
+                  >
+                    {(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched &&
+                        field.state.meta.errors.length > 0;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor="stockCount">
+                            Stock Count <span className="text-red-500">*</span>
+                          </FieldLabel>
+                          <Input
+                            id="stockCount"
+                            type="text"
+                            placeholder="100"
+                            value={field.state.value}
+                            onChange={(e) => {
+                              field.handleChange(e.target.value);
+                              setPreviewData({ ...previewData, stockCount: e.target.value });
+                            }}
+                            onBlur={field.handleBlur}
+                            aria-invalid={isInvalid}
+                            className="h-10"
+                          />
+                          {isInvalid && (
+                            <FieldError
+                              errors={field.state.meta.errors.map((err) =>
+                                typeof err === "string" ? { message: err } : err
+                              )}
+                            />
+                          )}
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+                </div>
+
+                {/* Discount */}
+                <div className="space-y-2">
+                  <form.Field
+                    name="discount"
+                    validators={{
+                      onChange: z
+                        .number()
+                        .min(0, "Discount cannot be negative")
+                        .max(100, "Discount cannot exceed 100%"),
+                    }}
+                  >
+                    {(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched &&
+                        field.state.meta.errors.length > 0;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor="discount">
+                            Discount (%)
+                          </FieldLabel>
+                          <Input
+                            id="discount"
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder="0"
+                            value={field.state.value}
+                            onChange={(e) => {
+                              const value = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                              field.handleChange(value);
+                              setPreviewData({ ...previewData, discount: value });
+                            }}
+                            onBlur={field.handleBlur}
+                            aria-invalid={isInvalid}
+                            className="h-10"
+                          />
+                          {isInvalid && (
+                            <FieldError
+                              errors={field.state.meta.errors.map((err) =>
+                                typeof err === "string" ? { message: err } : err
+                              )}
+                            />
+                          )}
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+                </div>
+              </div>
+
+              {/* Rating */}
               <div className="space-y-2">
                 <form.Field
-                  name="stockCount"
+                  name="rating"
                   validators={{
                     onChange: z
-                      .string()
-                      .min(1, "Stock count is required")
-                      .refine(
-                        (val) =>
-                          !isNaN(Number(val)) && Number(val) >= 0,
-                        "Stock count must be a valid number"
-                      ),
+                      .number()
+                      .min(0, "Rating must be at least 0")
+                      .max(5, "Rating cannot exceed 5"),
                   }}
                 >
-                  {(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched &&
-                      field.state.meta.errors.length > 0;
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="stockCount">
-                          Stock Count <span className="text-red-500">*</span>
-                        </FieldLabel>
-                        <Input
-                          id="stockCount"
-                          type="text"
-                          placeholder="100"
-                          value={field.state.value}
-                          onChange={(e) => {
-                            field.handleChange(e.target.value);
-                            setPreviewData({ ...previewData, stockCount: e.target.value });
+                  {(field) => (
+                    <Field>
+                      <FieldLabel htmlFor="rating">
+                        Product Rating
+                      </FieldLabel>
+                      <div className="flex items-center gap-3">
+                        <StarRating
+                          rating={field.state.value}
+                          onRatingChange={(rating) => {
+                            field.handleChange(rating);
+                            setPreviewData({ ...previewData, rating });
                           }}
-                          onBlur={field.handleBlur}
-                          aria-invalid={isInvalid}
-                          className="h-10"
                         />
-                        {isInvalid && (
-                          <FieldError
-                            errors={field.state.meta.errors.map((err) =>
-                              typeof err === "string" ? { message: err } : err
-                            )}
-                          />
-                        )}
-                      </Field>
-                    );
-                  }}
+                        <span className="text-sm text-gray-600">
+                          {field.state.value > 0 
+                            ? `${field.state.value} out of 5 stars` 
+                            : "No rating"}
+                        </span>
+                      </div>
+                    </Field>
+                  )}
                 </form.Field>
               </div>
 
@@ -331,7 +467,7 @@ const AddEditProductPage = () => {
                         <FieldLabel>
                           Available Sizes <span className="text-red-500">*</span>
                         </FieldLabel>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           {availableSizes.map((size) => (
                             <Button
                               key={size}
@@ -359,6 +495,93 @@ const AddEditProductPage = () => {
                       </Field>
                     );
                   }}
+                </form.Field>
+              </div>
+
+              {/* Product Colors */}
+              <div className="space-y-3">
+                <form.Field name="colors">
+                  {(field) => (
+                    <Field>
+                      <FieldLabel>
+                        Product Colors
+                      </FieldLabel>
+                      
+                      {/* Color Palette */}
+                      <div className="flex gap-2 flex-wrap mb-3">
+                        {availableColors.map((color) => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => addColor(color.value)}
+                            className={cn(
+                              "w-10 h-10 rounded-full border-2 transition-all hover:scale-110",
+                              selectedColors.includes(color.value)
+                                ? "border-purple-600 ring-2 ring-purple-300"
+                                : "border-gray-300 hover:border-gray-400",
+                              color.value === "#FFFFFF" && "border-gray-400"
+                            )}
+                            style={{ backgroundColor: color.value }}
+                            title={color.name}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Custom Color Input */}
+                      <div className="flex gap-2 mb-3">
+                        <Input
+                          type="text"
+                          placeholder="Enter color name or hex code (e.g., #FF5733)"
+                          value={customColorInput}
+                          onChange={(e) => setCustomColorInput(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addCustomColor();
+                            }
+                          }}
+                          className="h-10 flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={addCustomColor}
+                          className="h-10 px-4"
+                        >
+                          Add
+                        </Button>
+                      </div>
+
+                      {/* Selected Colors */}
+                      {selectedColors.length > 0 && (
+                        <div>
+                          <p className="text-sm text-gray-600 mb-2">Selected Colors:</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {selectedColors.map((color) => (
+                              <Badge
+                                key={color}
+                                variant="outline"
+                                className="pl-2 pr-1 py-1 flex items-center gap-2"
+                              >
+                                <span
+                                  className="w-4 h-4 rounded-full border"
+                                  style={{ backgroundColor: color.startsWith("#") ? color : color }}
+                                />
+                                <span className="text-xs">{color}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeColor(color)}
+                                  className="hover:bg-gray-200 rounded-full p-0.5"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </Field>
+                  )}
                 </form.Field>
               </div>
 
@@ -462,6 +685,8 @@ const AddEditProductPage = () => {
                     form.reset();
                     setSelectedSizes(["S"]);
                     setImageInputs([""]);
+                    setSelectedColors([]);
+                    setCustomColorInput("");
                     setPreviewData({
                       productName: "",
                       category: "",
@@ -471,6 +696,9 @@ const AddEditProductPage = () => {
                       images: [""],
                       description: "",
                       isVisible: true,
+                      rating: 0,
+                      discount: 0,
+                      colors: [],
                     });
                   }}
                 >
@@ -507,6 +735,9 @@ const AddEditProductPage = () => {
               images={previewData.images}
               description={previewData.description}
               isVisible={previewData.isVisible}
+              rating={previewData.rating}
+              discount={previewData.discount}
+              colors={previewData.colors}
             />
           )}
         </div>

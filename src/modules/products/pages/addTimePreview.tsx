@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import StarRating from "@/components/ui/star-rating";
 
 interface ProductPreviewProps {
   productName: string;
@@ -12,6 +13,9 @@ interface ProductPreviewProps {
   images: string[];
   description: string;
   isVisible: boolean;
+  rating: number;
+  discount: number;
+  colors: string[];
 }
 
 const ProductPreview = ({
@@ -23,9 +27,14 @@ const ProductPreview = ({
   images,
   description,
   isVisible,
+  rating,
+  discount,
+  colors,
 }: ProductPreviewProps) => {
   const stockNumber = Number(stockCount) || 0;
   const priceNumber = Number(price) || 0;
+  const discountedPrice = priceNumber - (priceNumber * discount) / 100;
+  const hasDiscount = discount > 0;
 
   // Determine stock status
   const getStockStatus = () => {
@@ -82,9 +91,40 @@ const ProductPreview = ({
             </div>
           )}
 
+          {/* Rating */}
+          {rating > 0 && (
+            <div className="flex items-center gap-2">
+              <StarRating rating={rating} readonly size="md" />
+              <span className="text-sm text-gray-600">({rating}/5)</span>
+            </div>
+          )}
+
           {/* Price */}
-          <div className="text-3xl font-bold text-purple-600">
-            ${priceNumber.toFixed(2)}
+          <div className="space-y-1">
+            {hasDiscount ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-bold text-purple-600">
+                    ₹{discountedPrice.toFixed(2)}
+                  </span>
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs px-2 py-1">
+                    {discount}% OFF
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg text-gray-400 line-through">
+                    ₹{priceNumber.toFixed(2)}
+                  </span>
+                  <span className="text-sm text-green-600 font-medium">
+                    Save ₹{(priceNumber - discountedPrice).toFixed(2)}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="text-3xl font-bold text-purple-600">
+                ₹{priceNumber.toFixed(2)}
+              </div>
+            )}
           </div>
 
           {/* Stock Status */}
@@ -116,6 +156,31 @@ const ProductPreview = ({
                   >
                     {size}
                   </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Available Colors */}
+          {colors.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Available Colors
+              </h3>
+              <div className="flex gap-2 flex-wrap items-center">
+                {colors.map((color, index) => (
+                  <div key={index} className="flex items-center gap-1">
+                    <div
+                      className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-sm"
+                      style={{ backgroundColor: color.startsWith("#") ? color : color }}
+                      title={color}
+                    />
+                    {color.startsWith("#") ? (
+                      <span className="text-xs text-gray-500">{color}</span>
+                    ) : (
+                      <span className="text-xs text-gray-700 capitalize">{color}</span>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
