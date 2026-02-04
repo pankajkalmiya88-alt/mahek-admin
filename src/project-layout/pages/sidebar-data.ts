@@ -1,4 +1,4 @@
-import { LayoutDashboard, GraduationCap, BookOpen, FileText, BookOpenCheck, Users, MessageSquare, Network, User, Settings, CreditCard, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, type LucideIcon } from "lucide-react";
 
 
 export interface SidebarNavItem {

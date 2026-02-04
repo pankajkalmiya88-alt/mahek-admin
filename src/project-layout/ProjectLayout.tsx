@@ -1,23 +1,14 @@
-import { useState } from "react"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage} from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "./pages/app-sidebar"
 import { Outlet } from "react-router"
-import { Search, Bell, Settings, ChevronDown, User } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Bell, Settings, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import userAvatar from "../assets/user.jpg"
 
 export default function Page() {
-  const [selectedRole, setSelectedRole] = useState("Products")
 
   return (
     <SidebarProvider>
