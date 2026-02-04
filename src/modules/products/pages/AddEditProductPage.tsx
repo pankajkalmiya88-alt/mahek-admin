@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, Plus, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,7 @@ const availableSizes = ["S", "M", "L", "XL", "XXL", "XXXL"];
 const AddEditProductPage = () => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>(["S"]);
   const [imageInputs, setImageInputs] = useState<string[]>([""]);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   
   // State for live preview
   const [previewData, setPreviewData] = useState({
@@ -94,10 +95,10 @@ const AddEditProductPage = () => {
           Back to Products
         </button>
 
-        {/* 50/50 Split Layout */}
-        <div className="grid grid-cols-2 gap-6">
+        {/* Dynamic Layout */}
+        <div className={cn("grid gap-6", isPreviewVisible ? "grid-cols-2" : "grid-cols-1")}>
           {/* Left Side - Form */}
-          <Card className="bg-white p-8">
+          <Card className={cn("bg-white p-8", !isPreviewVisible && "max-w-3xl mx-auto w-full")}>
             <h1 className="text-2xl font-bold text-gray-900 mb-6">
               Add New Product
             </h1>
@@ -475,6 +476,15 @@ const AddEditProductPage = () => {
                   Cancel
                 </Button>
                 <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-11 border-blue-500 text-blue-600 hover:bg-blue-50"
+                  onClick={() => setIsPreviewVisible(!isPreviewVisible)}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  {isPreviewVisible ? "Hide Preview" : "View"}
+                </Button>
+                <Button
                   type="submit"
                   className="flex-1 h-11 bg-purple-600 hover:bg-purple-700 text-white"
                 >
@@ -485,17 +495,19 @@ const AddEditProductPage = () => {
           </form>
           </Card>
 
-          {/* Right Side - Live Preview */}
-          <ProductPreview
-            productName={previewData.productName}
-            category={previewData.category}
-            price={previewData.price}
-            stockCount={previewData.stockCount}
-            availableSizes={previewData.availableSizes}
-            images={previewData.images}
-            description={previewData.description}
-            isVisible={previewData.isVisible}
-          />
+          {/* Right Side - Live Preview (conditionally rendered) */}
+          {isPreviewVisible && (
+            <ProductPreview
+              productName={previewData.productName}
+              category={previewData.category}
+              price={previewData.price}
+              stockCount={previewData.stockCount}
+              availableSizes={previewData.availableSizes}
+              images={previewData.images}
+              description={previewData.description}
+              isVisible={previewData.isVisible}
+            />
+          )}
         </div>
       </div>
     </div>
