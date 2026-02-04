@@ -1,0 +1,143 @@
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware'
+
+// --------------------
+// Token Store
+// --------------------
+export interface TokenStore {
+  token: string,
+  setToken: (data: string) => void;
+};
+
+export const useTokenStore = create<TokenStore>()(
+  devtools(
+    persist(
+      (set) => ({
+        token: "",
+        setToken: (data: string) => set({ token: data }),
+      }),
+      { name: "token-store" } // persist config goes here
+    )
+  )
+);
+
+
+// --------------------
+// User Detail Store (object-based)
+// --------------------
+
+export interface UserDetailStore {
+  userDetail: Record<string, any>;
+  setUserDetail: (userDetail: Record<string, any>) => void;
+  updateUserDetail: (data: Record<string, any>) => void;
+  clearUserDetail: () => void;
+};
+
+export const useUserDetailStore = create<UserDetailStore>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        userDetail: {},
+        setUserDetail: (userDetail) => set({ userDetail }),
+        updateUserDetail: (data) =>
+          set({
+            userDetail: { ...get().userDetail, ...data },
+          }),
+        clearUserDetail: () => set({ userDetail: {} }),
+      }),
+      {
+        name: "user-detail-store",
+        partialize: (state) => ({ userDetail: state.userDetail }), // ✅ only persist this
+      }
+    )
+  )
+);
+
+
+// --------------------
+// Confirmation Store (object-based)
+// --------------------
+
+export interface ConfirmationStore {
+  open: boolean;
+  data: Record<string, any> | null;
+  resolver: ((value: any) => void) | null;
+
+  openConfirmation: (data?: Record<string, any>) => Promise<any>;
+  closeConfirmation: (result?: any) => void;
+}
+
+// export const confirmationStore = create<ConfirmationStore>()(
+//   devtools((set, get) => ({
+//     open: false,
+//     data: null,
+//     resolver: null,
+
+//     // Open + set data + return promise
+//     openConfirmation: (data: null) => {
+//       return new Promise((resolve) => {
+//         set({
+//           open: true,
+//           data,
+//           resolver: resolve,
+//         });
+//       });
+//     },
+
+//     // Close + return data to parent
+//     closeConfirmation: (result = null) => {
+//       const { resolver, data } = get();
+
+//       if (resolver) {
+//         resolver({
+//           confirmed: !!result,
+//           data,         // <-- parent gets data here ⭐
+//         });
+//       }
+
+//       set({
+//         open: false,
+//         data: null,
+//         resolver: null,
+//       });
+//     },
+//   }))
+// );
+
+
+
+export const confirmationStore = create<ConfirmationStore>()(
+  devtools((set, get) => ({
+    open: false,
+    data: null,
+    resolver: null,
+
+    openConfirmation: (data: any) => {
+      return new Promise((resolve) => {
+        set({
+          open: true,
+          data: data ?? null,
+          resolver: resolve,
+        });
+      });
+    },
+
+    closeConfirmation: (result = false) => {
+      const { resolver, data } = get();
+
+      if (resolver) {
+        resolver({
+          confirmed: !!result,
+          data: data ?? null,
+        });
+      }
+
+      // Reset state
+      set({
+        open: false,
+        data: null,
+        resolver: null,
+      });
+    },
+  }))
+);
