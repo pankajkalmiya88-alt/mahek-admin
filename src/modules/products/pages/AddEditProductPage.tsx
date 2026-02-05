@@ -51,6 +51,7 @@ const AddEditProductPage = () => {
     images: [""],
     description: "",
     isVisible: true,
+    isFeatured: false,
     rating: 0,
     discount: 0,
     colors: [] as string[],
@@ -66,12 +67,21 @@ const AddEditProductPage = () => {
       images: [""],
       description: "",
       isVisible: true,
+      isFeatured: false,
       rating: 0,
       discount: 0,
       colors: [] as string[],
     },
     onSubmit: async ({ value }) => {
-      console.log("Form Values:", value);
+      // Convert string values to numbers for API payload
+      const payload = {
+        ...value,
+        price: Number(value.price),
+        stockCount: Number(value.stockCount),
+        rating: Number(value.rating),
+        discount: Number(value.discount),
+      };
+      console.log("Form Payload:", payload);
     },
   });
 
@@ -624,6 +634,35 @@ const AddEditProductPage = () => {
                     </div>
                   ))}
                 </div>
+
+                {/* Image Preview Thumbnails */}
+                {imageInputs.some((img) => img.trim()) && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">Image Previews:</p>
+                    <div className="grid grid-cols-4 gap-3">
+                      {imageInputs
+                        .filter((img) => img.trim())
+                        .map((image, index) => (
+                          <div
+                            key={index}
+                            className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50"
+                          >
+                            <img
+                              src={image}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = "https://via.placeholder.com/150?text=Invalid+URL";
+                              }}
+                            />
+                            <div className="absolute top-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded">
+                              {index + 1}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Description */}
@@ -675,6 +714,30 @@ const AddEditProductPage = () => {
                 </form.Field>
               </div>
 
+              {/* Featured Product Checkbox */}
+              <div className="space-y-2">
+                <form.Field name="isFeatured">
+                  {(field) => (
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="isFeatured"
+                        checked={field.state.value}
+                        onCheckedChange={(checked) => {
+                          field.handleChange(checked === true);
+                          setPreviewData({ ...previewData, isFeatured: checked === true });
+                        }}
+                      />
+                      <FieldLabel
+                        htmlFor="isFeatured"
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        Mark as featured product
+                      </FieldLabel>
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4">
                 <Button
@@ -696,6 +759,7 @@ const AddEditProductPage = () => {
                       images: [""],
                       description: "",
                       isVisible: true,
+                      isFeatured: false,
                       rating: 0,
                       discount: 0,
                       colors: [],

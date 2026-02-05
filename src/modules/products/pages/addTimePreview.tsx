@@ -49,10 +49,9 @@ const ProductPreview = ({
 
   const stockStatus = getStockStatus();
 
-  // Get the first image or show a placeholder
-  const displayImage = images.length > 0 && images[0] 
-    ? images[0] 
-    : "https://images.unsplash.com/photo-1581798459219-c8f5a92e5d5e?w=400&h=300&fit=crop";
+  // Filter out empty images
+  const validImages = images.filter((img) => img.trim());
+  const hasImages = validImages.length > 0;
 
   return (
     <Card className="bg-white p-6 sticky top-6">
@@ -62,21 +61,42 @@ const ProductPreview = ({
         </h3>
       </div>
 
-      <div className="flex gap-6">
-        {/* Product Image */}
-        <div className="w-[200px] h-[200px] flex-shrink-0">
-          <img
-            src={displayImage}
-            alt={productName || "Product preview"}
-            className="w-full h-full object-cover rounded-lg"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1581798459219-c8f5a92e5d5e?w=400&h=300&fit=crop";
-            }}
-          />
-        </div>
+      <div className="space-y-6">
+        {/* Product Images - All thumbnails */}
+        {hasImages ? (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-gray-700">
+              Product Images ({validImages.length})
+            </h3>
+            <div className="grid grid-cols-3 gap-3">
+              {validImages.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 hover:border-purple-400 transition-colors"
+                >
+                  <img
+                    src={image}
+                    alt={`${productName || "Product"} - Image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=Invalid+URL";
+                    }}
+                  />
+                  <div className="absolute top-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded">
+                    {index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="w-full aspect-[3/2] rounded-lg bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
+            <p className="text-sm text-gray-500">No images added</p>
+          </div>
+        )}
 
         {/* Product Details */}
-        <div className="flex-1 space-y-4">
+        <div className="space-y-4">
           {/* Product Name */}
           <h2 className="text-2xl font-bold text-gray-900">
             {productName || "Product Name"}

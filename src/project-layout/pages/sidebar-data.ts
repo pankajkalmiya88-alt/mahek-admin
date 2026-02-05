@@ -1,4 +1,4 @@
-import { LayoutDashboard, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Package, type LucideIcon } from "lucide-react";
 
 
 export interface SidebarNavItem {
@@ -23,7 +23,7 @@ export const sidebarData: SidebarNavItem[] = [
   {
     title: "Products",
     url: "/products",
-    icon: LayoutDashboard,
+    icon: Package,
     isActive: true,
   },
   // {
