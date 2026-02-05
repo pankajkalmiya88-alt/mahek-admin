@@ -612,7 +612,7 @@ const AddEditProductPage = () => {
               {/* Product Colors */}
               <div className="space-y-3">
                 <form.Field name="colors">
-                  {(field) => (
+                  {() => (
                     <Field>
                       <FieldLabel>
                         Product Colors

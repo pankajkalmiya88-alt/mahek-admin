@@ -3,7 +3,6 @@ import { Search, Eye, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -19,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ordersData, type Order, type OrderStatus } from "@/data/ordersData";
+import { ordersData, type OrderStatus } from "@/data/ordersData";
 import { Link } from "react-router";
 
 const OrdersListPage = () => {

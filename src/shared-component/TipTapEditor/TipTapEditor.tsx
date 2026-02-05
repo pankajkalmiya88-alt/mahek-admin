@@ -33,8 +33,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   editorClassName,
   disabled = false,
 }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, forceRender] = useState(0);
+  const [, forceRender] = useState(0);
   const safeValue = value ?? '';
 
   const editor = useEditor({

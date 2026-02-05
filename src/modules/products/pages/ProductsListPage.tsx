@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Search, Plus, Eye, Edit2, Trash2, EyeOff, LoaderCircle } from "lucide-react";
+import { Search, Plus, Eye, Edit2, Trash2, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,6 @@ const ProductListPage = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  console.log('data: ', data);
   const products = data?.data?.products || [];
   const totalCount = data?.data?.total || 0;
 

@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { usersData, type User, type UserStatus } from "@/data/usersData";
+import { usersData, type UserStatus } from "@/data/usersData";
 import { Link } from "react-router";
 
 const UsersListPage = () => {
