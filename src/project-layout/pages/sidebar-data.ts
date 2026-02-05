@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, type LucideIcon } from "lucide-react";
 
 
 export interface SidebarNavItem {
@@ -26,65 +26,19 @@ export const sidebarData: SidebarNavItem[] = [
     icon: Package,
     isActive: true,
   },
-  // {
-  //   title: "Classroom",
-  //   url: "#",
-  //   icon: GraduationCap,
-  //   items: [
-  //     {
-  //       title: "Syllabus",
-  //       url: "/classroom/syllabus",
-  //       icon: BookOpen,
-  //     },
-  //     {
-  //       title: "Past Papers",
-  //       url: "/classroom/past-papers",
-  //       icon: FileText,
-  //     },
-  //   ],
-  // },
-  // {
-  //   title: "Hadithi Hadithi",
-  //   url: "/hadithi-hadithi",
-  //   icon: BookOpenCheck,
-  // },
-  // {
-  //   title: "Engage",
-  //   url: "#",
-  //   icon: Users,
-  //   items: [
-  //     {
-  //       title: "Discussion",
-  //       url: "/engage/discussion",
-  //       icon: Users,
-  //     },
-  //     {
-  //       title: "Chat",
-  //       url: "/engage/chat",
-  //       icon: MessageSquare,
-  //     },
-  //     {
-  //       title: "Connection",
-  //       url: "/engage/connection",
-  //       icon: Network,
-  //     },
-  //   ],
-  // },
-  // {
-  //   title: "Parent's Corner",
-  //   url: "/parents-corner",
-  //   icon: User,
-  // },
-  // {
-  //   title: "Profile & Settings",
-  //   url: "/profile-settings",
-  //   icon: Settings,
-  // },
-  // {
-  //   title: "Payment & Subscription",
-  //   url: "/payment-subscription",
-  //   icon: CreditCard,
-  // },
+  {
+    title: "Users",
+    url: "/users",
+    icon: Users,
+    isActive: true,
+  },
+   {
+    title: "Orders",
+    url: "/orders",
+    icon: ShoppingCart,
+    isActive: true,
+  },
+
 ];
 
 
