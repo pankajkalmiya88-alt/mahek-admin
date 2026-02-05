@@ -48,15 +48,14 @@ const ProductDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Back Button */}
-        <Link
-          to="/products"
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Products
-        </Link>
+      {/* Back Button */}
+      <Link
+        to="/products"
+        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span className="text-sm font-medium">Back to Products</span>
+      </Link>
 
         {/* Main Content */}
         <Card className="bg-white p-8">
@@ -193,7 +192,6 @@ const ProductDetailPage = () => {
             </div>
           </div>
         </Card>
-      </div>
     </div>
   );
 };

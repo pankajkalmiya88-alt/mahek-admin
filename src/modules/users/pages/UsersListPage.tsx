@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Search, Filter, Eye, UserX } from "lucide-react";
+import { Search, Eye, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { usersData, type User, type UserStatus } from "@/data/usersData";
+import { Link } from "react-router";
 
 const UsersListPage = () => {
   const [searchValue, setSearchValue] = React.useState("");
@@ -98,43 +99,30 @@ const UsersListPage = () => {
       </div>
 
       {/* Search and Filter */}
-      <Card className="bg-white">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3">
-            {/* Search Input */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search users by name, email, or phone..."
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="pl-10 h-12 border-gray-200"
-              />
-            </div>
+      <div className="flex items-center gap-3">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search users by name, email, or phone..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="pl-10 h-11 border-gray-300 bg-white"
+          />
+        </div>
 
-            {/* Filter Icon */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-12 w-12 border-gray-200"
-            >
-              <Filter className="w-5 h-5 text-gray-600" />
-            </Button>
-
-            {/* Filter Dropdown */}
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[150px] h-12 border-gray-200">
-                <SelectValue placeholder="All Users" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Filter Dropdown */}
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[150px] h-11 border-gray-300 bg-white">
+            <SelectValue placeholder="All Users" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Users</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="blocked">Blocked</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Users Table */}
       <Card className="bg-white">
@@ -213,13 +201,12 @@ const UsersListPage = () => {
                     {/* Actions */}
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        <Link
+                          to="/users/detail/1"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
                         >
                           <Eye className="h-5 w-5" />
-                        </Button>
+                        </Link>
                         <Button
                           variant="ghost"
                           size="icon"

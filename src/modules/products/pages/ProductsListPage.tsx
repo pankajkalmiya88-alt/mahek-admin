@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Search, Filter, Plus, Eye, Edit2, Trash2, EyeOff, LoaderCircle } from "lucide-react";
+import { Search, Plus, Eye, Edit2, Trash2, EyeOff, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -65,12 +65,12 @@ const ProductListPage = () => {
   const totalCount = data?.data?.total || 0;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header Section */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-gray-500 mt-1">
             Manage your product inventory
           </p>
         </div>
@@ -88,7 +88,7 @@ const ProductListPage = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="Search products..."
-            className="pl-10 pr-10 h-10 border-gray-300"
+            className="pl-10 h-11 border-gray-300 bg-white"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
           />
@@ -96,22 +96,17 @@ const ProductListPage = () => {
             <LoaderCircle className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-10 w-10">
-            <Filter className="w-4 h-4 text-gray-600" />
-          </Button>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[120px] h-10">
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="men">Men</SelectItem>
-              <SelectItem value="women">Women</SelectItem>
-              <SelectItem value="kids">Kids</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select defaultValue="all">
+          <SelectTrigger className="w-[150px] h-11 border-gray-300 bg-white">
+            <SelectValue placeholder="Filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="men">Men</SelectItem>
+            <SelectItem value="women">Women</SelectItem>
+            <SelectItem value="kids">Kids</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Loading State */}

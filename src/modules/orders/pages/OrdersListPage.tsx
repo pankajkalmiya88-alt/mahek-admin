@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Search, Filter, Eye, Package } from "lucide-react";
+import { Search, Eye, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ordersData, type Order, type OrderStatus } from "@/data/ordersData";
+import { Link } from "react-router";
 
 const OrdersListPage = () => {
   const [searchValue, setSearchValue] = React.useState("");
@@ -91,7 +92,9 @@ const OrdersListPage = () => {
         <Card className="bg-white">
           <CardContent className="p-6">
             <p className="text-sm text-gray-600 mb-2">Pending</p>
-            <p className="text-4xl font-bold text-yellow-600">{stats.pending}</p>
+            <p className="text-4xl font-bold text-yellow-600">
+              {stats.pending}
+            </p>
           </CardContent>
         </Card>
 
@@ -99,7 +102,9 @@ const OrdersListPage = () => {
         <Card className="bg-white">
           <CardContent className="p-6">
             <p className="text-sm text-gray-600 mb-2">Shipped</p>
-            <p className="text-4xl font-bold text-purple-600">{stats.shipped}</p>
+            <p className="text-4xl font-bold text-purple-600">
+              {stats.shipped}
+            </p>
           </CardContent>
         </Card>
 
@@ -107,7 +112,9 @@ const OrdersListPage = () => {
         <Card className="bg-white">
           <CardContent className="p-6">
             <p className="text-sm text-gray-600 mb-2">In Transit</p>
-            <p className="text-4xl font-bold text-blue-600">{stats.inTransit}</p>
+            <p className="text-4xl font-bold text-blue-600">
+              {stats.inTransit}
+            </p>
           </CardContent>
         </Card>
 
@@ -115,52 +122,41 @@ const OrdersListPage = () => {
         <Card className="bg-white">
           <CardContent className="p-6">
             <p className="text-sm text-gray-600 mb-2">Delivered</p>
-            <p className="text-4xl font-bold text-green-600">{stats.delivered}</p>
+            <p className="text-4xl font-bold text-green-600">
+              {stats.delivered}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Search and Filter */}
-      <Card className="bg-white">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3">
-            {/* Search Input */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search by order ID, customer name, or email..."
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="pl-10 h-12 border-gray-200"
-              />
-            </div>
+      <div className="flex items-center gap-3">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search by order ID, customer name, or email..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="pl-10 h-11 border-gray-300 bg-white"
+          />
+        </div>
 
-            {/* Filter Icon */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-12 w-12 border-gray-200"
-            >
-              <Filter className="w-5 h-5 text-gray-600" />
-            </Button>
-
-            {/* Filter Dropdown */}
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[150px] h-12 border-gray-200">
-                <SelectValue placeholder="All Orders" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Orders</SelectItem>
-                <SelectItem value="DELIVERED">Delivered</SelectItem>
-                <SelectItem value="IN TRANSIT">In Transit</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="SHIPPED">Shipped</SelectItem>
-                <SelectItem value="CANCELLED">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Filter Dropdown */}
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[150px] h-11 border-gray-300 bg-white">
+            <SelectValue placeholder="All Orders" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Orders</SelectItem>
+            <SelectItem value="DELIVERED">Delivered</SelectItem>
+            <SelectItem value="IN TRANSIT">In Transit</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
+            <SelectItem value="SHIPPED">Shipped</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Orders Table */}
       <Card className="bg-white">
@@ -243,10 +239,13 @@ const OrdersListPage = () => {
 
                     {/* Actions */}
                     <TableCell>
-                      <button className="flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors">
+                      <Link
+                        to="/orders/detail/1"
+                        className="flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+                      >
                         <Eye className="w-4 h-4" />
                         View
-                      </button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))
