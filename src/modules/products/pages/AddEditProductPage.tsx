@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { z } from "zod";
-import { ArrowLeft, Plus, X, Eye } from "lucide-react";
+import { ArrowLeft, Check, X, Eye, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import StarRating from "@/components/ui/star-rating";
 import { createProduct } from "@/http/Services/all";
 import { showError, showSuccess } from "@/utility/utility";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import ProductPreview from "./addTimePreview";
 
 const availableSizes = ["S", "M", "L", "XL", "XXL", "XXXL"];
@@ -39,10 +40,37 @@ const availableColors = [
   { name: "Orange", value: "#F97316" },
 ];
 
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"] as const;
+const ALLOWED_IMAGE_ACCEPT = ".jpg,.jpeg,.png";
+
+function validateImageFile(file: File): { valid: true } | { valid: false; error: string } {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+    return {
+      valid: false,
+      error: "Invalid file type. Only JPG, JPEG, and PNG images are allowed.",
+    };
+  }
+  if (file.size > MAX_IMAGE_SIZE_BYTES) {
+    return {
+      valid: false,
+      error: "File is too large. Maximum size is 5 MB.",
+    };
+  }
+  return { valid: true };
+}
+
 const AddEditProductPage = () => {
   const navigate = useNavigate();
   const [selectedSizes, setSelectedSizes] = useState<string[]>(["S"]);
-  const [imageInputs, setImageInputs] = useState<string[]>([""]);
+  /** Each slot is either a URL (uploaded) or null (empty). Order preserved for images array. */
+  const [imageFields, setImageFields] = useState<(string | null)[]>([null]);
+  /** Display name (e.g. file name) per slot for UI. Same length as imageFields. */
+  const [displayNames, setDisplayNames] = useState<(string | null)[]>([null]);
+  /** Indices of slots currently uploading. Enables concurrent uploads and per-field isolation. */
+  const [uploadingSlots, setUploadingSlots] = useState<number[]>([]);
+  /** Per-slot validation/upload error messages. */
+  const [errorBySlot, setErrorBySlot] = useState<Record<number, string>>({});
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [customColorInput, setCustomColorInput] = useState("");
@@ -54,7 +82,7 @@ const AddEditProductPage = () => {
     price: "",
     stockCount: "",
     availableSizes: ["S"],
-    images: [""],
+    images: [] as string[],
     description: "",
     isVisible: true,
     isFeatured: false,
@@ -81,7 +109,7 @@ const AddEditProductPage = () => {
       price: "",
       stockCount: "",
       availableSizes: ["S"],
-      images: [""],
+      images: [] as string[],
       description: "",
       isVisible: true,
       isFeatured: false,
@@ -90,8 +118,12 @@ const AddEditProductPage = () => {
       colors: [] as string[],
     },
     onSubmit: async ({ value }) => {
+      const images = (value.images ?? []).filter(
+        (u): u is string => typeof u === "string" && u.length > 0
+      );
       const payload = {
         ...value,
+        images,
         price: Number(value.price),
         stockCount: Number(value.stockCount),
         rating: Number(value.rating),
@@ -110,28 +142,82 @@ const AddEditProductPage = () => {
     setPreviewData({ ...previewData, availableSizes: newSizes });
   };
 
-  const addImageInput = () => {
-    const newImages = [...imageInputs, ""];
-    setImageInputs(newImages);
-    form.setFieldValue("images", newImages);
-    setPreviewData({ ...previewData, images: newImages });
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const syncImagesToForm = (fields: (string | null)[]) => {
+    const urls = fields.filter((u): u is string => u != null);
+    form.setFieldValue("images", urls);
+    setPreviewData((prev) => ({ ...prev, images: urls }));
   };
 
-  const removeImageInput = (index: number) => {
-    if (imageInputs.length > 1) {
-      const newImages = imageInputs.filter((_, i) => i !== index);
-      setImageInputs(newImages);
-      form.setFieldValue("images", newImages);
-      setPreviewData({ ...previewData, images: newImages });
+  const addImageField = () => {
+    setImageFields((prev) => [...prev, null]);
+    setDisplayNames((prev) => [...prev, null]);
+  };
+
+  const removeImageField = (slotIndex: number) => {
+    setImageFields((prev) => {
+      const next = prev.filter((_, i) => i !== slotIndex);
+      const resolved = next.length > 0 ? next : [null];
+      syncImagesToForm(resolved);
+      return resolved;
+    });
+    setDisplayNames((prev) => {
+      const next = prev.filter((_, i) => i !== slotIndex);
+      return next.length > 0 ? next : [null];
+    });
+    setUploadingSlots((prev) =>
+      prev.filter((s) => s !== slotIndex).map((s) => (s > slotIndex ? s - 1 : s))
+    );
+    setErrorBySlot((prev) => {
+      const next: Record<number, string> = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        const ki = Number(k);
+        if (ki === slotIndex) return;
+        next[ki > slotIndex ? ki - 1 : ki] = v;
+      });
+      return next;
+    });
+  };
+
+  const handleImageUpload = async (file: File, slotIndex: number) => {
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setErrorBySlot((prev) => ({ ...prev, [slotIndex]: validation.error }));
+      showError(validation.error);
+      if (fileInputRefs.current[slotIndex]) fileInputRefs.current[slotIndex]!.value = "";
+      return;
     }
-  };
 
-  const updateImageInput = (index: number, value: string) => {
-    const newImages = [...imageInputs];
-    newImages[index] = value;
-    setImageInputs(newImages);
-    form.setFieldValue("images", newImages);
-    setPreviewData({ ...previewData, images: newImages });
+    setUploadingSlots((prev) => (prev.includes(slotIndex) ? prev : [...prev, slotIndex]));
+    setErrorBySlot((prev) => {
+      const next = { ...prev };
+      delete next[slotIndex];
+      return next;
+    });
+
+    try {
+      const data = await uploadImageToCloudinary(file);
+      setImageFields((prev) => {
+        const next = [...prev];
+        next[slotIndex] = data.secure_url;
+        syncImagesToForm(next);
+        return next;
+      });
+      setDisplayNames((prev) => {
+        const next = [...prev];
+        next[slotIndex] = file.name;
+        return next;
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Image upload failed";
+      setErrorBySlot((prev) => ({ ...prev, [slotIndex]: message }));
+      showError(message);
+    } finally {
+      setUploadingSlots((prev) => prev.filter((s) => s !== slotIndex));
+      const input = fileInputRefs.current[slotIndex];
+      if (input) input.value = "";
+    }
   };
 
   const addColor = (color: string) => {
@@ -610,74 +696,120 @@ const AddEditProductPage = () => {
                 </form.Field>
               </div>
 
-              {/* Image URLs - Multiple */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
+              {/* Product Images - dynamic fields; each field has its own input and state */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2">
                   <FieldLabel>Product Images</FieldLabel>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs gap-1"
-                    onClick={addImageInput}
+                    className="h-8 text-xs gap-1.5 shrink-0"
+                    onClick={addImageField}
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-3.5 h-3.5" />
                     Add Image
                   </Button>
                 </div>
-                <div className="space-y-2">
-                  {imageInputs.map((image, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        type="text"
-                        placeholder={`Image URL ${index + 1}`}
-                        value={image}
-                        onChange={(e) => updateImageInput(index, e.target.value)}
-                        className="h-10 flex-1"
-                      />
-                      {imageInputs.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => removeImageInput(index)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
 
-                {/* Image Preview Thumbnails */}
-                {imageInputs.some((img) => img.trim()) && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">Image Previews:</p>
-                    <div className="grid grid-cols-4 gap-3">
-                      {imageInputs
-                        .filter((img) => img.trim())
-                        .map((image, index) => (
+                <div className="flex flex-col gap-4">
+                  {imageFields.map((url, slotIndex) => {
+                    const isUploading = uploadingSlots.includes(slotIndex);
+                    const slotError = errorBySlot[slotIndex];
+                    const isError = Boolean(slotError);
+                    const isSuccess = url != null && !isError;
+                    const displayName =
+                      displayNames[slotIndex] ?? (url ? url.split("/").pop() ?? "Image" : null);
+
+                    return (
+                      <div key={slotIndex} className="flex flex-col gap-2">
+                        <input
+                          ref={(el) => {
+                            fileInputRefs.current[slotIndex] = el;
+                          }}
+                          type="file"
+                          accept={ALLOWED_IMAGE_ACCEPT}
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, slotIndex);
+                          }}
+                        />
+                        <div className="flex gap-2 items-center">
                           <div
-                            key={index}
-                            className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50"
+                            className={cn(
+                              "flex flex-1 min-w-0 gap-0 rounded-md overflow-hidden border shadow-xs h-10",
+                              isSuccess && "border-green-600",
+                              isError && "border-destructive",
+                              !isError && !isSuccess && "border-input"
+                            )}
                           >
-                            <img
-                              src={image}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.src = "https://via.placeholder.com/150?text=Invalid+URL";
-                              }}
-                            />
-                            <div className="absolute top-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded">
-                              {index + 1}
+                            <div
+                              className={cn(
+                                "flex flex-1 min-w-0 h-10 items-center gap-2 bg-transparent px-3 text-sm text-foreground",
+                                isUploading && "bg-muted/30"
+                              )}
+                            >
+                              {isUploading ? (
+                                <>
+                                  <Spinner className="size-4 shrink-0 text-muted-foreground" />
+                                  <span className="text-muted-foreground truncate">Uploading...</span>
+                                </>
+                              ) : isError ? (
+                                <>
+                                  <span className="flex-1 min-w-0 truncate text-muted-foreground">Choose file</span>
+                                  <span className="flex shrink-0 text-destructive" aria-hidden>
+                                    <X className="size-4" />
+                                  </span>
+                                </>
+                              ) : displayName ? (
+                                <>
+                                  <span className="flex-1 min-w-0 truncate">{displayName}</span>
+                                  <span className="flex shrink-0 text-green-600" aria-hidden>
+                                    <Check className="size-4" />
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-muted-foreground truncate">Choose file</span>
+                              )}
                             </div>
+                            <Button
+                              type="button"
+                              className="h-10 rounded-none rounded-r-md bg-blue-600 hover:bg-blue-700 text-white border-0 px-4 text-sm font-medium shrink-0 disabled:opacity-50 disabled:pointer-events-none"
+                              disabled={isUploading}
+                              onClick={() => fileInputRefs.current[slotIndex]?.click()}
+                            >
+                              Browse...
+                            </Button>
                           </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
+                          {imageFields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-10 w-10 shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => removeImageField(slotIndex)}
+                              aria-label={`Remove image field ${slotIndex + 1}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                        {isSuccess && (
+                          <p className="text-sm text-green-600">File is valid</p>
+                        )}
+                        {isError && slotError && (
+                          <p className="text-sm text-red-600" role="alert">
+                            {slotError}
+                          </p>
+                        )}
+                        {slotIndex === 0 && imageFields.length === 1 && (
+                          <p className="text-sm text-muted-foreground">JPG, JPEG or PNG. Max 5 MB.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Description */}
@@ -762,8 +894,12 @@ const AddEditProductPage = () => {
                   onClick={() => {
                     form.reset();
                     setSelectedSizes(["S"]);
-                    setImageInputs([""]);
+                    setImageFields([null]);
+                    setDisplayNames([null]);
+                    setUploadingSlots([]);
+                    setErrorBySlot({});
                     setSelectedColors([]);
+                    syncImagesToForm([null]);
                     setCustomColorInput("");
                     setPreviewData({
                       productName: "",
@@ -771,7 +907,7 @@ const AddEditProductPage = () => {
                       price: "",
                       stockCount: "",
                       availableSizes: ["S"],
-                      images: [""],
+                      images: [],
                       description: "",
                       isVisible: true,
                       isFeatured: false,
