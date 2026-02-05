@@ -1,0 +1,24 @@
+# Netlify configuration for Vite (React) SPA
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+#
+# Required environment variables (set in Netlify UI: Site settings > Environment variables):
+#   VITE_API_BASE_URL              - Backend API base URL (e.g. https://your-api.com/api/)
+#   VITE_CLOUDINARY_CLOUD_NAME     - Cloudinary cloud name
+#   VITE_CLOUDINARY_UPLOAD_PRESET  - Cloudinary unsigned upload preset name
+#   VITE_CLOUDINARY_BASE_URL       - (optional) Defaults to https://api.cloudinary.com/v1_1/
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Node version is set via .nvmrc (Netlify uses it automatically).
+# Ensures optional dependencies (Rollup, lightningcss Linux binaries) install correctly.
+[build.environment]
+  NPM_FLAGS = "--include=optional"
+
+# SPA: serve index.html for all routes so client-side routing works
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true

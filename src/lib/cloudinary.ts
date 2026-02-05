@@ -1,6 +1,6 @@
 const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
 const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
-const CLOUDINARY_BASE_URL = import.meta.env.VITE_VITE_CLOUDINARY_BASE_URL as string | undefined;
+const CLOUDINARY_BASE_URL = import.meta.env.VITE_CLOUDINARY_BASE_URL as string | undefined;
 
 export interface CloudinaryUploadResponse {
   secure_url: string;
@@ -23,8 +23,8 @@ export async function uploadImageToCloudinary(file: File): Promise<CloudinaryUpl
   formData.append("file", file);
   formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-  // const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-  const url = `${CLOUDINARY_BASE_URL}${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const baseUrl = CLOUDINARY_BASE_URL ?? "https://api.cloudinary.com/v1_1/";
+  const url = `${baseUrl}${CLOUDINARY_CLOUD_NAME}/image/upload`;
   const response = await fetch(url, {
     method: "POST",
     body: formData,
