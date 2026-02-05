@@ -49,5 +49,11 @@ export const getProductById = async (id: string) => api.get(`products/${id}`);
 export const updateProduct = async (id: string, payload: any) => api.patch(`products/${id}`, payload);
 
 
+/**
+ * Sends a DELETE request to the server to remove a product by its ID.
+ *
+ * @param id - The unique identifier of the product to be deleted.
+ * @returns A promise that resolves with the API response after successful deletion.
+ */
 export const deleteProduct = async (id: string) => api.delete(`products/delete/${id}`);
 
