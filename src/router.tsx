@@ -21,6 +21,18 @@ const ProductListPage = lazy(() => import("./modules/products/pages/ProductsList
 const AddEditProductPage = lazy(() => import("./modules/products/pages/AddEditProductPage"));
 const ProductDetailPage = lazy(() => import("./modules/products/pages/ProductDetailPage"));
 
+// Users
+const UserLayout = lazy(() => import("./modules/users/layouts/UsersLayout"));
+const UserListPage = lazy(() => import("./modules/users/pages/UsersListPage"));
+const AddEditUserPage = lazy(() => import("./modules/users/pages/AddEditUserPage"));
+const UserDetailPage = lazy(() => import("./modules/users/pages/UserDetailPage"));
+
+// Orders
+const OrderLayout = lazy(() => import("./modules/orders/layouts/OrdersLayout"));
+const OrderListPage = lazy(() => import("./modules/orders/pages/OrdersListPage"));
+const AddEditOrderPage = lazy(() => import("./modules/orders/pages/AddEditOrderPage"));
+const OrderDetailPage = lazy(() => import("./modules/orders/pages/OrderDetailPage"));
+
 // ===== Reusable Suspense Wrapper =====
 const withSuspense = (Component: any) => (
   <Suspense fallback={<LoadingSpinner />}>
@@ -63,6 +75,28 @@ export const router = createBrowserRouter([
           { path: 'edit-product/:id', element: withSuspense(AddEditProductPage) },
           { path: 'detail/:id', element: withSuspense(ProductDetailPage) }
 
+        ]
+      },
+
+      {
+        path: 'users',
+        element: withSuspense(UserLayout),
+        children: [
+          { index: true, element: withSuspense(UserListPage) },
+          { path: 'add-user', element: withSuspense(AddEditUserPage) },
+          { path: 'edit-user/:id', element: withSuspense(AddEditUserPage) },
+          { path: 'detail/:id', element: withSuspense(UserDetailPage) }
+        ]
+      },
+
+      {
+        path: 'orders',
+        element: withSuspense(OrderLayout),
+        children: [
+          { index: true, element: withSuspense(OrderListPage) },
+          { path: 'add-order', element: withSuspense(AddEditOrderPage) },
+          { path: 'edit-order/:id', element: withSuspense(AddEditOrderPage) },
+          { path: 'detail/:id', element: withSuspense(OrderDetailPage) }
         ]
       }
 
