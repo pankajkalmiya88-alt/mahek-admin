@@ -1,4 +1,5 @@
-import { Search, Filter, Plus, Eye, Edit2, Trash2, EyeOff } from "lucide-react";
+import * as React from "react";
+import { Search, Filter, Plus, Eye, Edit2, Trash2, EyeOff, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,298 +12,58 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from "react-router";
-
-// Mock product data
-const products = [
-  {
-    id: 1,
-    name: "Purple Traditional Saree",
-    category: "Saree",
-    price: 1999,
-    stock: 15,
-    image: "https://aditri.co.in/wp-content/uploads/2024/06/182A6280.jpg",
-    badges: [],
-  },
-  {
-    id: 2,
-    name: "Red Bridal Lehenga",
-    category: "Lehenga",
-    price: 2499,
-    stock: 10,
-    image:
-      "https://assets.panashindia.com/media/catalog/product/cache/1/image/4333sr08-5688.jpg",
-    badges: ["Premium"],
-  },
-  {
-    id: 3,
-    name: "Blue Anarkali Suit",
-    category: "Suit",
-    price: 1499,
-    stock: 20,
-    image:
-      "https://images.jdmagicbox.com/quickquotes/images_main/seasons-classic-saree-14-04-2023-797-272412731-emyncsez.jpg",
-    badges: [],
-  },
-
-  {
-    id: 4,
-    name: "Green Silk Saree",
-    category: "Saree",
-    price: 1899,
-    stock: 18,
-    image:
-      "https://www.kollybollyethnics.com/image/cache/catalog/data/green-silk-saree-800x1100.jpg",
-    badges: [],
-  },
-  {
-    id: 5,
-    name: "Golden Bridal Lehenga",
-    category: "Lehenga",
-    price: 2799,
-    stock: 7,
-    image: "https://www.cbazaar.com/images/golden-bridal-lehenga.jpg",
-    badges: ["Low Stock"],
-  },
-  {
-    id: 6,
-    name: "Pink Party Suit",
-    category: "Suit",
-    price: 1399,
-    stock: 25,
-    image:
-      "https://rukminim2.flixcart.com/image/850/1000/xif0q/salwar-kurta-dupatta/pink-party-suit.jpg",
-    badges: [],
-  },
-
-  {
-    id: 7,
-    name: "Banarasi Wedding Saree",
-    category: "Saree",
-    price: 2299,
-    stock: 12,
-    image:
-      "https://www.utsavfashion.com/images/product/banarasi-wedding-saree.jpg",
-    badges: [],
-  },
-  {
-    id: 8,
-    name: "Maroon Designer Lehenga",
-    category: "Lehenga",
-    price: 2599,
-    stock: 9,
-    image: "https://www.kalkifashion.com/images/maroon-designer-lehenga.jpg",
-    badges: ["Premium"],
-  },
-  {
-    id: 9,
-    name: "Yellow Cotton Suit",
-    category: "Suit",
-    price: 1199,
-    stock: 30,
-    image: "https://www.biba.in/on/demandware.static/yellow-cotton-suit.jpg",
-    badges: [],
-  },
-
-  {
-    id: 10,
-    name: "Black Silk Saree",
-    category: "Saree",
-    price: 1799,
-    stock: 14,
-    image:
-      "https://www.samyakk.com/blog/wp-content/uploads/black-silk-saree.jpg",
-    badges: [],
-  },
-  {
-    id: 11,
-    name: "Royal Blue Lehenga",
-    category: "Lehenga",
-    price: 2499,
-    stock: 6,
-    image: "https://www.azafashions.com/images/royal-blue-lehenga.jpg",
-    badges: ["Low Stock"],
-  },
-  {
-    id: 12,
-    name: "White Anarkali Suit",
-    category: "Suit",
-    price: 1599,
-    stock: 21,
-    image: "https://www.houseofindya.com/images/white-anarkali.jpg",
-    badges: [],
-  },
-
-  {
-    id: 13,
-    name: "Pink Floral Saree",
-    category: "Saree",
-    price: 1699,
-    stock: 17,
-    image: "https://www.mirraw.com/images/pink-floral-saree.jpg",
-    badges: [],
-  },
-  {
-    id: 14,
-    name: "Heavy Embroidery Lehenga",
-    category: "Lehenga",
-    price: 2899,
-    stock: 5,
-    image: "https://www.andaazfashion.com/images/heavy-embroidery-lehenga.jpg",
-    badges: ["Premium"],
-  },
-  {
-    id: 15,
-    name: "Teal Printed Suit",
-    category: "Suit",
-    price: 1299,
-    stock: 28,
-    image: "https://www.libas.in/images/teal-printed-suit.jpg",
-    badges: [],
-  },
-
-  {
-    id: 16,
-    name: "Red & Gold Saree",
-    category: "Saree",
-    price: 1999,
-    stock: 13,
-    image: "https://www.pothys.com/images/red-gold-saree.jpg",
-    badges: [],
-  },
-  {
-    id: 17,
-    name: "Pastel Wedding Lehenga",
-    category: "Lehenga",
-    price: 2699,
-    stock: 8,
-    image: "https://www.wedabout.com/images/pastel-lehenga.jpg",
-    badges: [],
-  },
-  {
-    id: 18,
-    name: "Orange Festive Suit",
-    category: "Suit",
-    price: 1399,
-    stock: 26,
-    image: "https://www.sutram.com/images/orange-festive-suit.jpg",
-    badges: [],
-  },
-
-  {
-    id: 19,
-    name: "Classic Cotton Saree",
-    category: "Saree",
-    price: 1499,
-    stock: 22,
-    image: "https://www.taneira.com/images/classic-cotton-saree.jpg",
-    badges: [],
-  },
-  {
-    id: 20,
-    name: "Bridal Red Lehenga",
-    category: "Lehenga",
-    price: 2999,
-    stock: 4,
-    image: "https://www.kalkifashion.com/images/bridal-red-lehenga.jpg",
-    badges: ["Low Stock"],
-  },
-  {
-    id: 21,
-    name: "Designer Dupatta Suit",
-    category: "Suit",
-    price: 1599,
-    stock: 19,
-    image: "https://www.fabindia.com/images/designer-dupatta-suit.jpg",
-    badges: [],
-  },
-
-  {
-    id: 22,
-    name: "Green Kanjivaram Saree",
-    category: "Saree",
-    price: 2399,
-    stock: 11,
-    image: "https://www.nalli.com/images/green-kanjivaram-saree.jpg",
-    badges: [],
-  },
-  {
-    id: 23,
-    name: "Magenta Bridal Lehenga",
-    category: "Lehenga",
-    price: 2799,
-    stock: 7,
-    image: "https://www.azafashions.com/images/magenta-bridal-lehenga.jpg",
-    badges: ["Premium"],
-  },
-  {
-    id: 24,
-    name: "Beige Office Suit",
-    category: "Suit",
-    price: 1199,
-    stock: 24,
-    image: "https://www.biba.in/on/demandware.static/beige-office-suit.jpg",
-    badges: [],
-  },
-
-  {
-    id: 25,
-    name: "Festival Special Saree",
-    category: "Saree",
-    price: 1899,
-    stock: 16,
-    image: "https://www.craftsvilla.com/images/festival-special-saree.jpg",
-    badges: [],
-  },
-  {
-    id: 26,
-    name: "Green Party Lehenga",
-    category: "Lehenga",
-    price: 2599,
-    stock: 9,
-    image: "https://www.cbazaar.com/images/green-party-lehenga.jpg",
-    badges: [],
-  },
-  {
-    id: 27,
-    name: "Blue Printed Suit",
-    category: "Suit",
-    price: 1299,
-    stock: 27,
-    image: "https://www.libas.in/images/blue-printed-suit.jpg",
-    badges: [],
-  },
-
-  {
-    id: 28,
-    name: "Traditional Silk Saree",
-    category: "Saree",
-    price: 2099,
-    stock: 14,
-    image: "https://www.samyakk.com/blog/wp-content/uploads/silk-saree.jpg",
-    badges: [],
-  },
-  {
-    id: 29,
-    name: "Wedding Designer Lehenga",
-    category: "Lehenga",
-    price: 2899,
-    stock: 6,
-    image:
-      "https://www.kollybollyethnics.com/image/cache/catalog/data/wedding-designer-lehenga.jpg",
-    badges: ["Low Stock"],
-  },
-  {
-    id: 30,
-    name: "Stylish Cotton Suit",
-    category: "Suit",
-    price: 1099,
-    stock: 30,
-    image: "https://www.houseofindya.com/images/stylish-cotton-suit.jpg",
-    badges: [],
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { getProductsList } from "@/http/Services/all";
 
 const ProductListPage = () => {
+  const [searchValue, setSearchValue] = React.useState("");
+  const [debouncedSearchValue, setDebouncedSearchValue] = React.useState("");
+  const [showSearchSpinner, setShowSearchSpinner] = React.useState(false);
+  const [offset, setOffset] = React.useState(0);
+  const [limit] = React.useState(20);
+
+  // Debounce search input
+  React.useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      const trimmedValue = searchValue.trim();
+      setDebouncedSearchValue(trimmedValue);
+      setShowSearchSpinner(false);
+    }, 500);
+
+    if (searchValue.trim().length > 0) {
+      setShowSearchSpinner(true);
+    }
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchValue]);
+
+  // Reset to first page when search changes
+  React.useEffect(() => {
+    setOffset(0);
+  }, [debouncedSearchValue]);
+
+  // Build query string for API
+  const queryString = React.useMemo(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearchValue) {
+      params.append("search", debouncedSearchValue);
+    }
+    params.append("offset", offset.toString());
+    params.append("limit", limit.toString());
+    return `?${params.toString()}`;
+  }, [debouncedSearchValue, offset, limit]);
+
+  // Fetch products using TanStack Query
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["products", queryString],
+    queryFn: () => getProductsList(queryString),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  console.log('data: ', data);
+  const products = data?.data?.products || [];
+  const totalCount = data?.data?.total || 0;
+
   return (
     <div className="p-6 space-y-6">
       {/* Header Section */}
@@ -327,8 +88,13 @@ const ProductListPage = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="Search products..."
-            className="pl-10 h-10 border-gray-300"
+            className="pl-10 pr-10 h-10 border-gray-300"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
           />
+          {showSearchSpinner && (
+            <LoaderCircle className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" className="h-10 w-10">
@@ -348,110 +114,165 @@ const ProductListPage = () => {
         </div>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <LoaderCircle className="h-8 w-8 animate-spin text-gray-400" />
+          <span className="ml-2 text-gray-600">Loading products...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {isError && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-red-600 font-semibold">Error loading products</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {error?.message || "Something went wrong"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !isError && products.length === 0 && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-gray-600 font-semibold">No products found</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {debouncedSearchValue
+                ? "Try adjusting your search"
+                : "Add some products to get started"}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Products Grid - 5 columns */}
-      <div className="grid grid-cols-5 gap-4">
-        {products.map((product) => (
-          <Card
-            key={product.id}
-            className="overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            {/* Product Image with Badges */}
-            <div className="relative h-48 overflow-hidden">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-              {/* Badges Overlay */}
-              {product.badges.map((badge, index) => (
-                <Badge
-                  key={index}
-                  className={`absolute top-2 right-2 ${
-                    badge === "SOLD OUT"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : badge === "Low Stock"
-                        ? "bg-orange-500 hover:bg-orange-600"
-                        : "bg-gray-800 hover:bg-gray-900"
-                  } text-white text-xs px-2 py-1`}
-                >
-                  {badge}
-                </Badge>
-              ))}
-            </div>
-
-            {/* Product Details */}
-            <CardContent className="p-4 space-y-3">
-              <div>
-                <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">
-                  {product.name}
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {product.category}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-purple-600">
-                  ₹{product.price}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    product.stock === 0
-                      ? "text-red-600"
-                      : product.stock < 10
-                        ? "text-orange-600"
-                        : "text-green-600"
-                  }`}
-                >
-                  Stock: {product.stock}
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-2 border-t">
-                <Link to={`/products/detail/1`}>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-4 text-xs font-medium border-gray-300 hover:bg-gray-50"
-                  >
-                    View
-                  </Button>
-                </Link>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon-sm"
-                    className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  {product.badges.includes("Hidden") ? (
-                    <Button
-                      size="icon-sm"
-                      className="h-8 w-8 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200"
-                    >
-                      <EyeOff className="w-4 h-4" />
-                    </Button>
-                  ) : (
-                    <Button
-                      size="icon-sm"
-                      className="h-8 w-8 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
+      {!isLoading && !isError && products.length > 0 && (
+        <>
+          <div className="grid grid-cols-5 gap-4">
+            {products.map((product: any) => (
+              <Card
+                key={product.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow"
+              >
+                {/* Product Image with Badges */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={product?.images && product?.images?.length && product?.images[0]  || "https://via.placeholder.com/400"}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Badges Overlay */}
+                  {product.stock === 0 && (
+                    <Badge className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1">
+                      SOLD OUT
+                    </Badge>
                   )}
-                  <Button
-                    size="icon-sm"
-                    className="h-8 w-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {product.stock > 0 && product.stock < 10 && (
+                    <Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs px-2 py-1">
+                      Low Stock
+                    </Badge>
+                  )}
                 </div>
+
+                {/* Product Details */}
+                <CardContent className="p-4 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">
+                      {product.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {product.category}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-purple-600">
+                      ₹{product.price}
+                    </span>
+                    <span
+                      className={`text-xs font-medium ${
+                        product.stock === 0
+                          ? "text-red-600"
+                          : product.stock < 10
+                            ? "text-orange-600"
+                            : "text-green-600"
+                      }`}
+                    >
+                      Stock: {product.stock}
+                    </span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <Link to={`/products/detail/${product.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-4 text-xs font-medium border-gray-300 hover:bg-gray-50"
+                      >
+                        View
+                      </Button>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="icon-sm"
+                        className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon-sm"
+                        className="h-8 w-8 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon-sm"
+                        className="h-8 w-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pagination Section */}
+          {totalCount > limit && (
+            <div className="mt-6 flex items-center justify-between border-t pt-6">
+              <div className="text-sm text-gray-600">
+                Showing {offset + 1} to {Math.min(offset + limit, totalCount)} of {totalCount} products
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setOffset((prev) => Math.max(prev - limit, 0))}
+                  disabled={offset === 0}
+                >
+                  Previous
+                </Button>
+                <div className="text-sm text-gray-600">
+                  Page {Math.floor(offset / limit) + 1} of {Math.ceil(totalCount / limit)}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setOffset((prev) => prev + limit)}
+                  disabled={offset + limit >= totalCount}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
