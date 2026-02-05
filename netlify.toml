@@ -16,9 +16,9 @@
 [build.environment]
   NPM_FLAGS = "--include=optional"
 
-# SPA: serve index.html for all routes so client-side routing works
+# SPA: serve index.html only when no file exists (so /assets/*.js and other files are served correctly).
+# Without force, Netlify serves real files first; only missing paths get index.html (client-side routes).
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = true
