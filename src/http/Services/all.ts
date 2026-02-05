@@ -30,6 +30,15 @@ export const deleteProductBasedOnId = async (id: string) => api.delete(`candidat
 
 
 /**
+ * Get a product by ID.
+ *
+ * @param {string} id - Unique ID of the product.
+ *
+ * @returns {Promise<any>} - Returns the API response promise.
+ */
+export const getProductById = async (id: string) => api.get(`products/${id}`);
+
+/**
  * Update an existing product.
  *
  * @param {string} id - Unique ID of the product to be updated.
@@ -37,13 +46,4 @@ export const deleteProductBasedOnId = async (id: string) => api.delete(`candidat
  *
  * @returns {Promise<any>} - Returns the API response promise.
  */
-export const updateProduct = async (id: string, payload: any) => api.put(`candidates/admin/products/${id}/update/`, payload);
-
-/**
- * Get a product by ID.
- *
- * @param {string} id - Unique ID of the product.
- *
- * @returns {Promise<any>} - Returns the API response promise.
- */
-export const getProductById = async (id: string) => api.get(`candidates/admin/products/${id}/`);
+export const updateProduct = async (id: string, payload: any) => api.patch(`products/${id}`, payload);

@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
 import { ArrowLeft, Check, X, Eye, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StarRating from "@/components/ui/star-rating";
-import { createProduct } from "@/http/Services/all";
+import { createProduct, getProductById, updateProduct } from "@/http/Services/all";
 import { showError, showSuccess } from "@/utility/utility";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import ProductPreview from "./addTimePreview";
@@ -60,8 +60,26 @@ function validateImageFile(file: File): { valid: true } | { valid: false; error:
   return { valid: true };
 }
 
+/** API response shape for getProductById */
+interface ProductApiResponse {
+  _id: string;
+  name: string;
+  price: number;
+  discountPercent?: number;
+  stock?: number;
+  sizes?: string[];
+  isActive?: boolean;
+  category?: string;
+  images?: string[];
+  colors?: string[];
+  description?: string;
+  averageRating?: number;
+}
+
 const AddEditProductPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = Boolean(id);
   const [selectedSizes, setSelectedSizes] = useState<string[]>(["S"]);
   /** Each slot is either a URL (uploaded) or null (empty). Order preserved for images array. */
   const [imageFields, setImageFields] = useState<(string | null)[]>([null]);
@@ -71,9 +89,22 @@ const AddEditProductPage = () => {
   const [uploadingSlots, setUploadingSlots] = useState<number[]>([]);
   /** Per-slot validation/upload error messages. */
   const [errorBySlot, setErrorBySlot] = useState<Record<number, string>>({});
-  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(!!id);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [customColorInput, setCustomColorInput] = useState("");
+  const [hasPopulatedForm, setHasPopulatedForm] = useState(false);
+
+  // Fetch product by ID when editing
+  const { data: productResponse, isLoading: isLoadingProduct, isError: isProductError, error: productError } = useQuery({
+    queryKey: ["product", id],
+    queryFn: async () => {
+      const res = await getProductById(id!);
+      return (res as { data?: ProductApiResponse }).data ?? res;
+    },
+    enabled: isEditMode && Boolean(id),
+    staleTime: 1000 * 60 * 5,
+  });
+  const product = productResponse as ProductApiResponse | undefined;
 
   // State for live preview
   const [previewData, setPreviewData] = useState({
@@ -91,7 +122,7 @@ const AddEditProductPage = () => {
     colors: [] as string[],
   });
 
-  const mutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: () => {
       showSuccess("Product created successfully");
@@ -101,6 +132,20 @@ const AddEditProductPage = () => {
       showError(error?.response?.data?.message ?? "Failed to create product");
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id: productId, payload }: { id: string; payload: Record<string, unknown> }) =>
+      updateProduct(productId, payload),
+    onSuccess: () => {
+      showSuccess("Product updated successfully");
+      navigate("/products");
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      showError(error?.response?.data?.message ?? "Failed to update product");
+    },
+  });
+
+  const mutation = isEditMode ? updateMutation : createMutation;
 
   const form = useForm({
     defaultValues: {
@@ -121,15 +166,32 @@ const AddEditProductPage = () => {
       const images = (value.images ?? []).filter(
         (u): u is string => typeof u === "string" && u.length > 0
       );
-      const payload = {
-        ...value,
-        images,
-        price: Number(value.price),
-        stockCount: Number(value.stockCount),
-        rating: Number(value.rating),
-        discount: Number(value.discount),
-      };
-      mutation.mutate(payload);
+      if (isEditMode && id) {
+        const updatePayload = {
+          name: value.productName,
+          price: Number(value.price),
+          discountPercent: Number(value.discount),
+          stock: Number(value.stockCount),
+          sizes: value.availableSizes,
+          images,
+          colors: value.colors ?? [],
+          description: value.description ?? "",
+          category: value.category ?? "",
+          isActive: value.isVisible,
+          averageRating: Number(value.rating),
+        };
+        updateMutation.mutate({ id, payload: updatePayload });
+      } else {
+        const createPayload = {
+          ...value,
+          images,
+          price: Number(value.price),
+          stockCount: Number(value.stockCount),
+          rating: Number(value.rating),
+          discount: Number(value.discount),
+        };
+        createMutation.mutate(createPayload);
+      }
     },
   });
 
@@ -247,10 +309,91 @@ const AddEditProductPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (id) setHasPopulatedForm(false);
+  }, [id]);
+
+  // In edit mode, show preview by default; in add mode, hide. Sync when navigating between add/edit.
+  useEffect(() => {
+    setIsPreviewVisible(!!id);
+  }, [id]);
+
+  // Populate form when product is fetched (edit mode)
+  useEffect(() => {
+    if (!product || hasPopulatedForm) return;
+    const p = product;
+    const images = p.images ?? [];
+    const formValues = {
+      productName: p.name ?? "",
+      category: p.category ?? "",
+      price: String(p.price ?? ""),
+      stockCount: String(p.stock ?? ""),
+      availableSizes: p.sizes?.length ? p.sizes : ["S"],
+      images,
+      description: p.description ?? "",
+      isVisible: p.isActive ?? true,
+      isFeatured: false,
+      rating: p.averageRating ?? 0,
+      discount: p.discountPercent ?? 0,
+      colors: p.colors ?? [],
+    };
+    form.reset(formValues);
+    setSelectedSizes(formValues.availableSizes);
+    setImageFields(images.length > 0 ? [...images] : [null]);
+    setDisplayNames(images.length > 0 ? images.map(() => null) : [null]);
+    setSelectedColors(formValues.colors);
+    setPreviewData({
+      productName: formValues.productName,
+      category: formValues.category,
+      price: formValues.price,
+      stockCount: formValues.stockCount,
+      availableSizes: formValues.availableSizes,
+      images: formValues.images,
+      description: formValues.description,
+      isVisible: formValues.isVisible,
+      isFeatured: formValues.isFeatured,
+      rating: formValues.rating,
+      discount: formValues.discount,
+      colors: formValues.colors,
+    });
+    syncImagesToForm(images.length > 0 ? [...images] : [null]);
+    setHasPopulatedForm(true);
+  }, [product, hasPopulatedForm]);
+
+  if (isEditMode && (isLoadingProduct || (product && !hasPopulatedForm))) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Spinner className="size-8" />
+          <p className="text-sm text-gray-600">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEditMode && isProductError) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <p className="text-red-600 font-medium">
+            {(productError as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Failed to load product"}
+          </p>
+          <Button variant="outline" onClick={() => navigate("/products")}>
+            Back to Products
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Back Button */}
-      <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors">
+      <button
+        type="button"
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+        onClick={() => navigate("/products")}
+      >
         <ArrowLeft className="w-4 h-4" />
         <span className="text-sm font-medium">Back to Products</span>
       </button>
@@ -260,7 +403,7 @@ const AddEditProductPage = () => {
           {/* Left Side - Form */}
           <Card className={cn("bg-white p-8", !isPreviewVisible && "max-w-3xl mx-auto w-full")}>
             <h1 className="text-2xl font-bold text-gray-900 mb-6">
-              Add New Product
+              {isEditMode ? "Edit Product" : "Add New Product"}
             </h1>
 
           <form
@@ -931,13 +1074,15 @@ const AddEditProductPage = () => {
                 <Button
                   type="submit"
                   className="flex-1 h-11 bg-purple-600 hover:bg-purple-700 text-white"
-                  disabled={mutation.isPending}
+                  disabled={mutation.isPending || (isEditMode && !hasPopulatedForm)}
                 >
                   {mutation.isPending ? (
                     <>
                       <Spinner className="mr-2 size-4" />
-                      Adding...
+                      {isEditMode ? "Updating..." : "Adding..."}
                     </>
+                  ) : isEditMode ? (
+                    "Update Product"
                   ) : (
                     "Add Product"
                   )}

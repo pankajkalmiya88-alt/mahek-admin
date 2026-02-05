@@ -211,12 +211,14 @@ const ProductListPage = () => {
                       </Button>
                     </Link>
                     <div className="flex items-center gap-2">
-                      <Button
+                      <Link to={`/products/edit-product/${product?._id}`}>
+                      <Button 
                         size="icon-sm"
                         className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
-                      >
+                        >
                         <Edit2 className="w-4 h-4" />
                       </Button>
+                        </Link>
                       <Button
                         size="icon-sm"
                         className="h-8 w-8 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200"
