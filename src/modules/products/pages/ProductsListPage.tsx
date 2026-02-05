@@ -12,15 +12,49 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from "react-router";
-import { useQuery } from "@tanstack/react-query";
-import { getProductsList } from "@/http/Services/all";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useStore } from "zustand";
+import { getProductsList, deleteProduct } from "@/http/Services/all";
+import { confirmationStore } from "@/store/store";
+import { ModalType } from "@/shared-component/Confirmation";
+import { showSuccess, showError } from "@/utility/utility";
 
 const ProductListPage = () => {
+  const queryClient = useQueryClient();
+  const openConfirmation = useStore(confirmationStore, (s) => s.openConfirmation);
+
   const [searchValue, setSearchValue] = React.useState("");
   const [debouncedSearchValue, setDebouncedSearchValue] = React.useState("");
   const [showSearchSpinner, setShowSearchSpinner] = React.useState(false);
   const [offset, setOffset] = React.useState(0);
   const [limit] = React.useState(20);
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      showSuccess("Product deleted successfully");
+    },
+    onError: (error: any) => {
+      showError(error?.response?.data?.message ?? "Failed to delete product");
+    },
+  });
+
+  const handleDeleteProduct = React.useCallback(
+    async (product: { _id?: string; id?: string }) => {
+      const id = product._id ?? product.id;
+      const response = await openConfirmation({
+        title: "Delete Product",
+        description: "Are you sure you want to delete this product?",
+        type: ModalType.DESTRUCTIVE,
+        id,
+      });
+      if (response?.confirmed && response?.data?.id) {
+        deleteMutation.mutate(response.data.id);
+      }
+    },
+    [openConfirmation, deleteMutation]
+  );
 
   // Debounce search input
   React.useEffect(() => {
@@ -228,8 +262,15 @@ const ProductListPage = () => {
                       <Button
                         size="icon-sm"
                         className="h-8 w-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                        onClick={() => handleDeleteProduct(product)}
+                        disabled={deleteMutation.isPending}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {deleteMutation.isPending &&
+                        deleteMutation.variables === (product._id ?? product.id) ? (
+                          <LoaderCircle className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>

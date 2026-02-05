@@ -47,3 +47,7 @@ export const getProductById = async (id: string) => api.get(`products/${id}`);
  * @returns {Promise<any>} - Returns the API response promise.
  */
 export const updateProduct = async (id: string, payload: any) => api.patch(`products/${id}`, payload);
+
+
+export const deleteProduct = async (id: string) => api.delete(`products/delete/${id}`);
+
