@@ -7,6 +7,15 @@ import { api } from '@/http/api';
  */
 export const getProductsList = async (queryString = '') => api.get(`products/${queryString}`);
 
+/**
+ * Create a new product.
+ *
+ * @param {any} payload - Product data payload.
+ *
+ * @returns {Promise<any>} - Returns the API response promise.
+ */
+export const createProduct = async (payload: any) => api.post(`products/add-product`, payload);
+
 
 /**
  * Delete a product based on their unique ID.
@@ -19,14 +28,6 @@ export const getProductsList = async (queryString = '') => api.get(`products/${q
  */
 export const deleteProductBasedOnId = async (id: string) => api.delete(`candidates/admin/products/${id}/delete/`);
 
-/**
- * Create a new product.
- *
- * @param {any} payload - Product data payload.
- *
- * @returns {Promise<any>} - Returns the API response promise.
- */
-export const createProduct = async (payload: any) => api.post(`candidates/admin/products/create/`, payload);
 
 /**
  * Update an existing product.

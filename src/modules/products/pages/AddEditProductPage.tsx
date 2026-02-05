@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import { z } from "zod";
 import { ArrowLeft, Plus, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,10 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StarRating from "@/components/ui/star-rating";
+import { createProduct } from "@/http/Services/all";
+import { showError, showSuccess } from "@/utility/utility";
 import ProductPreview from "./addTimePreview";
 
 const availableSizes = ["S", "M", "L", "XL", "XXL", "XXXL"];
@@ -35,12 +40,13 @@ const availableColors = [
 ];
 
 const AddEditProductPage = () => {
+  const navigate = useNavigate();
   const [selectedSizes, setSelectedSizes] = useState<string[]>(["S"]);
   const [imageInputs, setImageInputs] = useState<string[]>([""]);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [customColorInput, setCustomColorInput] = useState("");
-  
+
   // State for live preview
   const [previewData, setPreviewData] = useState({
     productName: "",
@@ -55,6 +61,17 @@ const AddEditProductPage = () => {
     rating: 0,
     discount: 0,
     colors: [] as string[],
+  });
+
+  const mutation = useMutation({
+    mutationFn: createProduct,
+    onSuccess: () => {
+      showSuccess("Product created successfully");
+      navigate("/products");
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      showError(error?.response?.data?.message ?? "Failed to create product");
+    },
   });
 
   const form = useForm({
@@ -73,7 +90,6 @@ const AddEditProductPage = () => {
       colors: [] as string[],
     },
     onSubmit: async ({ value }) => {
-      // Convert string values to numbers for API payload
       const payload = {
         ...value,
         price: Number(value.price),
@@ -81,7 +97,7 @@ const AddEditProductPage = () => {
         rating: Number(value.rating),
         discount: Number(value.discount),
       };
-      console.log("Form Payload:", payload);
+      mutation.mutate(payload);
     },
   });
 
@@ -779,8 +795,16 @@ const AddEditProductPage = () => {
                 <Button
                   type="submit"
                   className="flex-1 h-11 bg-purple-600 hover:bg-purple-700 text-white"
+                  disabled={mutation.isPending}
                 >
-                  Add Product
+                  {mutation.isPending ? (
+                    <>
+                      <Spinner className="mr-2 size-4" />
+                      Adding...
+                    </>
+                  ) : (
+                    "Add Product"
+                  )}
                 </Button>
               </div>
             </FieldGroup>
