@@ -235,7 +235,7 @@ const ProductListPage = () => {
 
                   {/* Action Buttons */}
                   <div className="flex items-center justify-between pt-2 border-t">
-                    <Link to={`/products/detail/${product.id}`}>
+                    <Link to={`/products/detail/${product._id}`}>
                       <Button
                         size="sm"
                         variant="outline"

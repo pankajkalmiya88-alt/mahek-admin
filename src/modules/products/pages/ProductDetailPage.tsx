@@ -1,54 +1,187 @@
-import { useState } from "react";
-import { ArrowLeft, Edit2, EyeOff, Trash2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { ArrowLeft, Edit2, EyeOff, Trash2, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useStore } from "zustand";
+import { getProductById, deleteProduct } from "@/http/Services/all";
+import { confirmationStore } from "@/store/store";
+import { ModalType } from "@/shared-component/Confirmation";
+import { showSuccess, showError } from "@/utility/utility";
 
-// Mock product data
-const productData = {
-  id: 1,
-  name: "Classic Taffy Mix",
-  category: "All",
-  price: 24.99,
-  stock: 150,
-  images: {
-    front: "https://images.unsplash.com/photo-1581798459219-c8f5a92e5d5e?w=600&h=600&fit=crop",
-    back: "https://images.unsplash.com/photo-1514517521153-1be72277b32f?w=600&h=600&fit=crop",
-    left: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=600&h=600&fit=crop",
-    right: "https://images.unsplash.com/photo-1511381939415-e44015466834?w=600&h=600&fit=crop",
-  },
-  availableSizes: ["S", "M", "L", "XL", "XXL", "XXXL"],
-  description: "A delicious mix of classic taffy flavors",
-  isVisible: true,
-};
+/** API response shape for getProductById */
+interface ProductDetailResponse {
+  _id: string;
+  name: string;
+  slug: string;
+  price: number;
+  discountPercent?: number;
+  stock?: number;
+  sizes?: string[];
+  isActive?: boolean;
+  category?: string;
+  images?: string[];
+  colors?: string[];
+  description?: string;
+  averageRating?: number;
+  totalReviews?: number;
+  reviews?: unknown[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const ProductDetailPage = () => {
-  const [selectedImage, setSelectedImage] = useState<"front" | "back" | "left" | "right">("front");
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const openConfirmation = useStore(
+    confirmationStore,
+    (s) => s.openConfirmation,
+  );
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  const imageViews = [
-    { key: "front" as const, label: "Front" },
-    { key: "back" as const, label: "Back" },
-    { key: "left" as const, label: "Left" },
-    { key: "right" as const, label: "Right" },
-  ];
+  const {
+    data: product,
+    isLoading,
+    isError,
+    error,
+  }: any = useQuery({
+    queryKey: ["product", id],
+    queryFn: async () => {
+      const res = await getProductById(id!);
+      return (res as { data?: ProductDetailResponse }).data ?? res;
+    },
+    enabled: Boolean(id),
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const getStockStatus = () => {
-    if (productData.stock === 0) {
-      return { text: "Out of Stock", color: "text-red-600", dotColor: "bg-red-600" };
-    } else if (productData.stock < 10) {
-      return { text: `Low Stock (${productData.stock} units)`, color: "text-orange-600", dotColor: "bg-orange-600" };
-    } else {
-      return { text: `In Stock (${productData.stock} units)`, color: "text-green-600", dotColor: "bg-green-600" };
+  const deleteMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      showSuccess("Product deleted successfully");
+      navigate("/products");
+    },
+    onError: (error: any) => {
+      showError(error?.response?.data?.message ?? "Failed to delete product");
+    },
+  });
+
+  const handleDeleteProduct = useCallback(
+    async (productItem: { _id?: string; id?: string }) => {
+      const productId = productItem._id ?? productItem.id;
+      const response = await openConfirmation({
+        title: "Delete Product",
+        description: "Are you sure you want to delete this product?",
+        type: ModalType.DESTRUCTIVE,
+        id: productId,
+      });
+      if (response?.confirmed && response?.data?.id) {
+        deleteMutation.mutate(response.data.id);
+      }
+    },
+    [openConfirmation, deleteMutation],
+  );
+
+  const getStockStatus = (stock: number = 0) => {
+    if (stock === 0) {
+      return {
+        text: "Out of Stock",
+        color: "text-red-600",
+        dotColor: "bg-red-600",
+      };
     }
+    if (stock < 10) {
+      return {
+        text: `Low Stock (${stock} units)`,
+        color: "text-orange-600",
+        dotColor: "bg-orange-600",
+      };
+    }
+    return {
+      text: `In Stock (${stock} units)`,
+      color: "text-green-600",
+      dotColor: "bg-green-600",
+    };
   };
 
-  const stockStatus = getStockStatus();
+  if (!id) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="text-center text-gray-600">
+          <p>No product ID provided.</p>
+          <Link
+            to="/products"
+            className="text-purple-600 hover:underline mt-2 inline-block"
+          >
+            Back to Products
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <LoaderCircle className="h-8 w-8 animate-spin text-gray-400" />
+          <span className="text-gray-600">Loading product...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    const message =
+      (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message ?? "Failed to load product";
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{message}</p>
+          <Link
+            to="/products"
+            className="inline-flex items-center gap-2 text-purple-600 hover:underline"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Products
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="text-center text-gray-600">
+          <p>Product not found.</p>
+          <Link
+            to="/products"
+            className="text-purple-600 hover:underline mt-2 inline-block"
+          >
+            Back to Products
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const images = product?.images ?? [];
+  const mainImage = images[selectedImageIndex] ?? images[0];
+  const stock = product.stock ?? 0;
+  const stockStatus = getStockStatus(stock);
+  const discountedPrice =
+    product.discountPercent != null && product.discountPercent > 0
+      ? product.price * (1 - product.discountPercent / 100)
+      : null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Back Button */}
       <Link
         to="/products"
         className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
@@ -57,85 +190,109 @@ const ProductDetailPage = () => {
         <span className="text-sm font-medium">Back to Products</span>
       </Link>
 
-        {/* Main Content */}
-        <Card className="bg-white p-8">
-          <div className="grid grid-cols-2 gap-12">
-            {/* Left Side - Product Images */}
-            <div className="space-y-4">
-              {/* Main Image Display */}
-              <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
+      <Card className="bg-white p-8">
+        <div className="grid grid-cols-2 gap-12">
+          {/* Left Side - Product Images */}
+          <div className="space-y-4">
+            <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
+              {mainImage ? (
                 <img
-                  src={productData.images[selectedImage]}
-                  alt={`${productData.name} - ${selectedImage} view`}
+                  src={mainImage}
+                  alt={`${product.name} - image ${selectedImageIndex + 1}`}
                   className="w-full h-full object-cover"
                 />
-              </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  No image
+                </div>
+              )}
+            </div>
 
-              {/* Image Thumbnails */}
+            {images.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
-                {imageViews.map((view) => (
+                {images.map((url: any, index: number) => (
                   <button
-                    key={view.key}
-                    onClick={() => setSelectedImage(view.key)}
+                    key={url}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(index)}
                     className={cn(
                       "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
-                      selectedImage === view.key
+                      selectedImageIndex === index
                         ? "border-purple-600 ring-2 ring-purple-200"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-gray-200 hover:border-gray-300",
                     )}
                   >
                     <img
-                      src={productData.images[view.key]}
-                      alt={`${view.label} view`}
+                      src={url}
+                      alt=""
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black/0 hover:bg-black/5 transition-colors" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
-                      <span className="text-white text-xs font-medium">{view.label}</span>
-                    </div>
                   </button>
                 ))}
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Right Side - Product Details */}
-            <div className="flex flex-col">
-              <div className="flex-1 space-y-6">
-                {/* Product Name */}
-                <div>
-                  <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                    {productData.name}
-                  </h1>
+          {/* Right Side - Product Details */}
+          <div className="flex flex-col">
+            <div className="flex-1 space-y-6">
+              <div>
+                <h1 className="text-4xl font-bold text-gray-900 mb-3">
+                  {product.name}
+                </h1>
+                {product.category && (
                   <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 text-sm px-3 py-1">
-                    {productData.category}
+                    {product.category}
                   </Badge>
-                </div>
+                )}
+              </div>
 
-                {/* Price */}
-                <div className="text-4xl font-bold text-purple-600">
-                  ${productData.price.toFixed(2)}
-                </div>
-
-                {/* Stock Status */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Stock Status
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className={cn("w-2.5 h-2.5 rounded-full", stockStatus.dotColor)}></span>
-                    <span className={cn("text-base font-medium", stockStatus.color)}>
-                      {stockStatus.text}
+              <div className="flex items-baseline gap-3 flex-wrap">
+                {discountedPrice != null ? (
+                  <>
+                    <span className="text-2xl text-gray-500 line-through">
+                      ₹{product.price.toLocaleString()}
                     </span>
-                  </div>
-                </div>
+                    <span className="text-4xl font-bold text-purple-600">
+                      ₹{Math.round(discountedPrice).toLocaleString()}
+                    </span>
+                    <Badge variant="secondary" className="text-sm">
+                      {product.discountPercent}% off
+                    </Badge>
+                  </>
+                ) : (
+                  <span className="text-4xl font-bold text-purple-600">
+                    ₹{product.price.toLocaleString()}
+                  </span>
+                )}
+              </div>
 
-                {/* Available Sizes */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                  Stock Status
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "w-2.5 h-2.5 rounded-full",
+                      stockStatus.dotColor,
+                    )}
+                  />
+                  <span
+                    className={cn("text-base font-medium", stockStatus.color)}
+                  >
+                    {stockStatus.text}
+                  </span>
+                </div>
+              </div>
+
+              {product.sizes && product.sizes.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">
                     Available Sizes
                   </h3>
                   <div className="flex gap-3 flex-wrap">
-                    {productData.availableSizes.map((size) => (
+                    {product.sizes.map((size: any) => (
                       <Button
                         key={size}
                         variant="outline"
@@ -146,52 +303,108 @@ const ProductDetailPage = () => {
                     ))}
                   </div>
                 </div>
+              )}
 
-                {/* Description */}
+              {product.colors && product.colors.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    Colors
+                  </h3>
+                  <div className="flex gap-2 flex-wrap items-center">
+                    {product.colors.map((color: any) => (
+                      <span
+                        key={color}
+                        className="w-8 h-8 rounded-full border-2 border-gray-200 shadow-sm"
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {product.description && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">
                     Description
                   </h3>
                   <p className="text-base text-gray-700 leading-relaxed">
-                    {productData.description}
+                    {product.description}
                   </p>
                 </div>
+              )}
 
-                {/* Visibility */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                  Visibility
+                </h3>
+                <p
+                  className={cn(
+                    "text-base font-medium",
+                    product.isActive ? "text-green-600" : "text-gray-500",
+                  )}
+                >
+                  {product.isActive
+                    ? "Visible to customers"
+                    : "Hidden from customers"}
+                </p>
+              </div>
+
+              {(product.averageRating != null ||
+                (product.totalReviews != null && product.totalReviews > 0)) && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Visibility
+                    Reviews
                   </h3>
-                  <p className={cn("text-base font-medium", productData.isVisible ? "text-green-600" : "text-gray-500")}>
-                    {productData.isVisible ? "Visible to customers" : "Hidden from customers"}
+                  <p className="text-base text-gray-700">
+                    {product.averageRating != null && (
+                      <span className="font-medium">
+                        {product.averageRating.toFixed(1)}
+                      </span>
+                    )}
+                    {product.totalReviews != null &&
+                      product.totalReviews > 0 && (
+                        <span className="text-gray-500">
+                          {" "}
+                          ({product.totalReviews} review
+                          {product.totalReviews === 1 ? "" : "s"})
+                        </span>
+                      )}
                   </p>
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-3 gap-4 pt-8 border-t mt-8">
-                <Button
-                  className="h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                >
+            <div className="grid grid-cols-3 gap-4 pt-8 border-t mt-8">
+              <Button
+                className="h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                asChild
+              >
+                <Link to={`/products/edit-product/${product._id}`}>
                   <Edit2 className="w-4 h-4 mr-2" />
                   Edit
-                </Button>
-                <Button
-                  className="h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium"
-                >
-                  <EyeOff className="w-4 h-4 mr-2" />
-                  Hide
-                </Button>
-                <Button
-                  className="h-12 bg-red-600 hover:bg-red-700 text-white font-medium"
-                >
+                </Link>
+              </Button>
+              <Button className="h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium">
+                <EyeOff className="w-4 h-4 mr-2" />
+                Hide
+              </Button>
+              <Button
+                className="h-12 bg-red-600 hover:bg-red-700 text-white font-medium"
+                onClick={() => handleDeleteProduct(product)}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? (
+                  <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
-              </div>
+                )}
+                Delete
+              </Button>
             </div>
           </div>
-        </Card>
+        </div>
+      </Card>
     </div>
   );
 };
