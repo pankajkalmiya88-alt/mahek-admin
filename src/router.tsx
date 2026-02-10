@@ -27,6 +27,9 @@ const ProductListPage = lazy(
 const AddEditProductPage = lazy(
   () => import("./modules/products/pages/AddEditProductPage"),
 );
+const NewAddEditProductPage = lazy(
+  () => import("./modules/products/pages/NewAddEditProduct"),
+);
 const ProductDetailPage = lazy(
   () => import("./modules/products/pages/ProductDetailPage"),
 );
@@ -89,6 +92,11 @@ export const router = createBrowserRouter([
           {
             path: "edit-product/:id",
             element: withSuspense(AddEditProductPage),
+          },
+          { path: "new-add-product", element: withSuspense(NewAddEditProductPage) },
+          {
+            path: "new-edit-product/:id",
+            element: withSuspense(NewAddEditProductPage),
           },
           { path: "detail/:id", element: withSuspense(ProductDetailPage) },
         ],
