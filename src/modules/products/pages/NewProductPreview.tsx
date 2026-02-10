@@ -19,6 +19,7 @@ interface NewProductPreviewProps {
   productName: string;
   brand: string;
   category: string;
+  subCategory?: string;
   description: string;
   variants: ProductVariant[];
 }
@@ -155,6 +156,7 @@ const NewProductPreview = ({
   productName,
   brand,
   category,
+  subCategory,
   description,
   variants,
 }: NewProductPreviewProps) => {
@@ -240,12 +242,19 @@ const NewProductPreview = ({
               </h2>
             </div>
 
-            {/* Category */}
-            {category && (
-              <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 px-3 py-1 text-xs font-medium">
-                {category}
-              </Badge>
-            )}
+            {/* Category and Sub-Category */}
+            <div className="flex gap-2">
+              {category && (
+                <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 px-3 py-1 text-xs font-medium">
+                  {category}
+                </Badge>
+              )}
+              {subCategory && (
+                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 px-3 py-1 text-xs font-medium">
+                  {subCategory}
+                </Badge>
+              )}
+            </div>
 
             {/* Rating */}
             <div className="flex items-center gap-3 border-b border-gray-200 pb-3">

@@ -34,6 +34,12 @@ const ProductDetailPage = lazy(
   () => import("./modules/products/pages/ProductDetailPage"),
 );
 
+const NewProductDetailPage = lazy(
+  () => import("./modules/products/pages/NewProductDetailPage"),
+);
+
+
+
 // Users
 const UserLayout = lazy(() => import("./modules/users/layouts/UsersLayout"));
 const UserListPage = lazy(() => import("./modules/users/pages/UsersListPage"));
@@ -93,12 +99,15 @@ export const router = createBrowserRouter([
             path: "edit-product/:id",
             element: withSuspense(AddEditProductPage),
           },
+          { path: "detail/:id", element: withSuspense(ProductDetailPage) },
+
+
           { path: "new-add-product", element: withSuspense(NewAddEditProductPage) },
           {
             path: "new-edit-product/:id",
             element: withSuspense(NewAddEditProductPage),
           },
-          { path: "detail/:id", element: withSuspense(ProductDetailPage) },
+          { path: "new-detail/:id", element: withSuspense(NewProductDetailPage) },
         ],
       },
 

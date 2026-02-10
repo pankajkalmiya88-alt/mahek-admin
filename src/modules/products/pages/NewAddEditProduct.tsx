@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Upload, X, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,6 +47,17 @@ import "ckeditor5/ckeditor5.css";
 // Available sizes for selection
 const AVAILABLE_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 
+// Category to Sub-Category mapping
+const CATEGORY_SUBCATEGORY_MAP: Record<string, string[]> = {
+  Lehenga: ["Bridal Lehenga", "Sider Lehenga"],
+  "Rajputi Poshak": [
+    "Bridal one poshak",
+    "Bridal one High poshak",
+    "Bridal poshak",
+  ],
+  Saree: ["Ethik saree", "Leven saree", "Govan cortan"],
+};
+
 // Image validation constants
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"] as const;
@@ -83,6 +94,7 @@ interface ProductVariant {
   mrp: string;
   sizes: Record<string, { selected: boolean; stock: string }>;
   images: string[];
+  sizeDetails?: string; // For Saree category - description of size
 }
 
 interface ProductApiResponse {
@@ -94,6 +106,7 @@ interface ProductApiResponse {
   sizes?: string[];
   isActive?: boolean;
   category?: string;
+  subCategory?: string;
   images?: string[];
   colors?: string[];
   description?: string;
@@ -132,6 +145,7 @@ const VariantCard = memo(
     variant,
     index,
     productName,
+    category,
     onUpdate,
     onRemove,
     onMultipleImagesUpload,
@@ -141,6 +155,7 @@ const VariantCard = memo(
     variant: ProductVariant;
     index: number;
     productName: string;
+    category: string;
     onUpdate: (id: string, updates: Partial<ProductVariant>) => void;
     onRemove: (id: string) => void;
     onMultipleImagesUpload: (
@@ -348,58 +363,92 @@ const VariantCard = memo(
           </div>
         )}
 
-        {/* Sizes Selection */}
-        <div className="space-y-2 mb-3">
-          <FieldLabel className="text-xs">
-            Sizes <span className="text-red-500">*</span>
-          </FieldLabel>
-          <p className="text-xs text-gray-600">
-            Select sizes and set stock for each
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            {AVAILABLE_SIZES.map((size) => (
-              <Button
-                key={size}
-                type="button"
-                variant="outline"
-                className={cn(
-                  "h-8 px-4 border-2 transition-colors font-medium text-sm",
-                  variant.sizes[size]?.selected
-                    ? "bg-orange-500 text-white border-orange-500 hover:bg-orange-600"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50",
-                )}
-                onClick={() => handleSizeToggle(size)}
-              >
-                {size}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Stock per Size */}
-        {selectedSizes.length > 0 && (
+        {/* Sizes Selection - Hide for Saree category */}
+        {category !== "Saree" ? (
           <div className="space-y-2 mb-3">
             <FieldLabel className="text-xs">
-              Stock per Size <span className="text-red-500">*</span>
+              Sizes <span className="text-red-500">*</span>
             </FieldLabel>
-            <div className="grid grid-cols-4 gap-2">
-              {selectedSizes.map(([size, data]) => (
-                <div key={size} className="space-y-1">
-                  <label className="text-xs font-medium text-gray-700">
-                    {size}
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={data.stock}
-                    onChange={(e) => handleStockChange(size, e.target.value)}
-                    className="h-8 text-sm"
-                  />
-                </div>
+            <p className="text-xs text-gray-600">
+              Select sizes and set stock for each
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {AVAILABLE_SIZES.map((size) => (
+                <Button
+                  key={size}
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "h-8 px-4 border-2 transition-colors font-medium text-sm",
+                    variant.sizes[size]?.selected
+                      ? "bg-orange-500 text-white border-orange-500 hover:bg-orange-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50",
+                  )}
+                  onClick={() => handleSizeToggle(size)}
+                >
+                  {size}
+                </Button>
               ))}
             </div>
           </div>
+        ) : (
+          <div className="space-y-2 mb-3">
+            <FieldLabel className="text-xs">Size</FieldLabel>
+            <div className="inline-flex items-center px-4 py-2 border-2 border-pink-500 rounded-full text-pink-600 font-semibold text-sm">
+              Onesize
+            </div>
+            <div className="mt-3">
+              <FieldLabel className="text-xs mb-2">Size Details (Optional)</FieldLabel>
+              <textarea
+                placeholder="E.g., Length: 5.5 metres plus 0.8 metre blouse piece&#10;Width: 1.06 metres (approx.)"
+                value={variant.sizeDetails || ""}
+                onChange={(e) => onUpdate(variant.id, { sizeDetails: e.target.value })}
+                className="w-full h-20 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Stock per Size - For Saree, show single stock input */}
+        {category === "Saree" ? (
+          <div className="space-y-2 mb-3">
+            <FieldLabel className="text-xs">
+              Stock <span className="text-red-500">*</span>
+            </FieldLabel>
+            <Input
+              type="number"
+              min="0"
+              placeholder="0"
+              value={variant.sizes["ONE_SIZE"]?.stock || ""}
+              onChange={(e) => handleStockChange("ONE_SIZE", e.target.value)}
+              className="h-8 text-sm w-full"
+            />
+          </div>
+        ) : (
+          selectedSizes.length > 0 && (
+            <div className="space-y-2 mb-3">
+              <FieldLabel className="text-xs">
+                Stock per Size <span className="text-red-500">*</span>
+              </FieldLabel>
+              <div className="grid grid-cols-4 gap-2">
+                {selectedSizes.map(([size, data]) => (
+                  <div key={size} className="space-y-1">
+                    <label className="text-xs font-medium text-gray-700">
+                      {size}
+                    </label>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={data.stock}
+                      onChange={(e) => handleStockChange(size, e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
         )}
 
         {/* Auto-generated SKUs */}
@@ -592,6 +641,7 @@ const NewAddEditProductPage = () => {
       productName: "",
       brand: "",
       category: "",
+      subCategory: "",
       pattern: "",
       sleeveType: "",
       fabric: "",
@@ -643,6 +693,8 @@ const NewAddEditProductPage = () => {
         return;
       }
 
+      const isSareeCategory = value.category === "Saree";
+
       for (const variant of variants) {
         if (!variant.color.trim()) {
           showError("All variants must have a color");
@@ -660,22 +712,33 @@ const NewAddEditProductPage = () => {
           showError(`Variant "${variant.color}" must have at least one image`);
           return;
         }
-        const selectedSizes = Object.entries(variant.sizes).filter(
-          ([, data]) => data.selected,
-        );
-        if (selectedSizes.length === 0) {
-          showError(
-            `Variant "${variant.color}" must have at least one size selected`,
+        
+        // For Saree category, validate ONE_SIZE stock
+        if (isSareeCategory) {
+          const oneSize = variant.sizes["ONE_SIZE"];
+          if (!oneSize || !oneSize.stock || parseInt(oneSize.stock) < 0) {
+            showError(`Variant "${variant.color}" must have valid stock`);
+            return;
+          }
+        } else {
+          // For other categories, validate selected sizes
+          const selectedSizes = Object.entries(variant.sizes).filter(
+            ([, data]) => data.selected,
           );
-          return;
-        }
-        // Validate stock for selected sizes
-        for (const [size, data] of selectedSizes) {
-          if (!data.stock || parseInt(data.stock) < 0) {
+          if (selectedSizes.length === 0) {
             showError(
-              `Variant "${variant.color}" size ${size} must have valid stock`,
+              `Variant "${variant.color}" must have at least one size selected`,
             );
             return;
+          }
+          // Validate stock for selected sizes
+          for (const [size, data] of selectedSizes) {
+            if (!data.stock || parseInt(data.stock) < 0) {
+              showError(
+                `Variant "${variant.color}" size ${size} must have valid stock`,
+              );
+              return;
+            }
           }
         }
       }
@@ -683,15 +746,19 @@ const NewAddEditProductPage = () => {
       // Prepare payload
       const allImages = variants.flatMap((v) => v.images);
       const allColors = variants.map((v) => v.color);
-      const allSizes = Array.from(
-        new Set(
-          variants.flatMap((v) =>
-            Object.entries(v.sizes)
-              .filter(([, data]) => data.selected)
-              .map(([size]) => size),
-          ),
-        ),
-      );
+      
+      // For Saree category, use "ONE SIZE", otherwise collect selected sizes
+      const allSizes = isSareeCategory
+        ? ["ONE SIZE"]
+        : Array.from(
+            new Set(
+              variants.flatMap((v) =>
+                Object.entries(v.sizes)
+                  .filter(([, data]) => data.selected)
+                  .map(([size]) => size),
+              ),
+            ),
+          );
 
       // Calculate average price
       const avgPrice =
@@ -719,6 +786,7 @@ const NewAddEditProductPage = () => {
         allSizes,
         avgPrice,
         totalStock,
+        subCategory: value.subCategory || undefined, // Include subCategory
       };
 
       // Console log form values
@@ -736,6 +804,7 @@ const NewAddEditProductPage = () => {
           colors: allColors,
           description: description,
           category: value.category,
+          subCategory: value.subCategory || undefined,
           brand: value.brand,
           pattern: value.pattern,
           fabric: value.fabric,
@@ -753,6 +822,7 @@ const NewAddEditProductPage = () => {
           sizes: allSizes,
           price: avgPrice,
           stockCount: totalStock,
+          subCategory: value.subCategory || undefined,
         };
         createMutation.mutate(createPayload);
       }
@@ -761,17 +831,22 @@ const NewAddEditProductPage = () => {
 
   // Variant handlers
   const addVariant = () => {
-    setVariants([
-      ...variants,
-      {
-        id: crypto.randomUUID(),
-        color: "",
-        sellingPrice: "",
-        mrp: "",
-        sizes: {},
-        images: [],
-      },
-    ]);
+    const isSareeCategory = form.state.values.category === "Saree";
+    const initialSizes: Record<string, { selected: boolean; stock: string }> = isSareeCategory
+      ? { ONE_SIZE: { selected: true, stock: "" } }
+      : {};
+    
+    const newVariant: ProductVariant = {
+      id: crypto.randomUUID(),
+      color: "",
+      sellingPrice: "",
+      mrp: "",
+      sizes: initialSizes,
+      images: [],
+      sizeDetails: isSareeCategory ? "" : undefined,
+    };
+      
+    setVariants([...variants, newVariant]);
   };
 
   const updateVariant = (id: string, updates: Partial<ProductVariant>) => {
@@ -901,6 +976,7 @@ const NewAddEditProductPage = () => {
       productName: product.name ?? "",
       brand: "",
       category: product.category ?? "",
+      subCategory: product.subCategory ?? "",
       pattern: "",
       sleeveType: "",
       fabric: "",
@@ -912,6 +988,71 @@ const NewAddEditProductPage = () => {
     setDescription(product.description ?? "");
     setHasPopulatedForm(true);
   }, [product, hasPopulatedForm]);
+
+  // Update variants when category changes to/from Saree
+  useEffect(() => {
+    const currentCategory = form.state.values.category;
+    
+    if (!currentCategory) {
+      // If no category selected, reset variants to initial state
+      setVariants([
+        {
+          id: crypto.randomUUID(),
+          color: "",
+          sellingPrice: "",
+          mrp: "",
+          sizes: {},
+          images: [],
+        },
+      ]);
+      return;
+    }
+    
+    const isSareeCategory = currentCategory === "Saree";
+    
+    setVariants(prevVariants => {
+      // If no variants exist, create one with appropriate structure
+      if (prevVariants.length === 0) {
+        const sizes: Record<string, { selected: boolean; stock: string }> = isSareeCategory
+          ? { ONE_SIZE: { selected: true, stock: "" } }
+          : {};
+        return [{
+          id: crypto.randomUUID(),
+          color: "",
+          sellingPrice: "",
+          mrp: "",
+          sizes,
+          images: [],
+          sizeDetails: isSareeCategory ? "" : undefined,
+        }];
+      }
+      
+      // Update existing variants based on category
+      return prevVariants.map(variant => {
+        if (isSareeCategory) {
+          // Convert to ONE_SIZE for Saree category
+          const sizes: Record<string, { selected: boolean; stock: string }> = { 
+            ONE_SIZE: { selected: true, stock: "" } 
+          };
+          const newVariant: ProductVariant = {
+            ...variant,
+            sizes,
+            sizeDetails: variant.sizeDetails || "",
+          };
+          return newVariant;
+        } else {
+          // Convert back to regular sizes for other categories
+          const sizes: Record<string, { selected: boolean; stock: string }> = {};
+          const newVariant: ProductVariant = {
+            ...variant,
+            sizes,
+          };
+          delete newVariant.sizeDetails;
+          return newVariant;
+        }
+      });
+    });
+  }, [form.state.values.category]);
 
   if (isEditMode && (isLoadingProduct || (product && !hasPopulatedForm))) {
     return (
@@ -1089,7 +1230,7 @@ const NewAddEditProductPage = () => {
                     </div>
                   </div>
 
-                  {/* Category and Pattern */}
+                  {/* Category and Sub-Category */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <form.Field
@@ -1118,19 +1259,17 @@ const NewAddEditProductPage = () => {
                                 onValueChange={(value) => {
                                   field.handleChange(value);
                                   field.handleBlur();
+                                  // Reset sub-category when category changes
+                                  form.setFieldValue("subCategory", "");
                                 }}
                               >
                                 <SelectTrigger className="h-8 text-sm">
                                   <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="kurtis">Kurtis</SelectItem>
-                                  <SelectItem value="sarees">Sarees</SelectItem>
-                                  <SelectItem value="lehenga">
-                                    Lehenga
-                                  </SelectItem>
-                                  <SelectItem value="suits">Suits</SelectItem>
-                                  <SelectItem value="gowns">Gowns</SelectItem>
+                                  <SelectItem value="Lehenga">Lehenga</SelectItem>
+                                  <SelectItem value="Rajputi Poshak">Rajputi Poshak</SelectItem>
+                                  <SelectItem value="Saree">Saree</SelectItem>
                                 </SelectContent>
                               </Select>
                               {isInvalid && (
@@ -1147,6 +1286,57 @@ const NewAddEditProductPage = () => {
                         }}
                       </form.Field>
                     </div>
+                    <div className="space-y-1">
+                      <form.Field name="subCategory">
+                        {(field) => {
+                          const selectedCategory = form.state.values.category;
+                          const subCategories = selectedCategory
+                            ? CATEGORY_SUBCATEGORY_MAP[selectedCategory] || []
+                            : [];
+                          const hasSubCategories = subCategories.length > 0;
+
+                          return (
+                            <Field>
+                              <FieldLabel
+                                htmlFor="subCategory"
+                                className="text-xs"
+                              >
+                                Sub Category (Optional)
+                              </FieldLabel>
+                              <Select
+                                value={field.state.value}
+                                onValueChange={(value) => {
+                                  field.handleChange(value);
+                                  field.handleBlur();
+                                }}
+                                disabled={!hasSubCategories}
+                              >
+                                <SelectTrigger className="h-8 text-sm">
+                                  <SelectValue 
+                                    placeholder={
+                                      hasSubCategories
+                                        ? "Select sub-category"
+                                        : "Select category first"
+                                    } 
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {subCategories.map((subCat) => (
+                                    <SelectItem key={subCat} value={subCat}>
+                                      {subCat}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </Field>
+                          );
+                        }}
+                      </form.Field>
+                    </div>
+                  </div>
+
+                  {/* Pattern */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <form.Field
                         name="pattern"
@@ -1442,37 +1632,57 @@ const NewAddEditProductPage = () => {
               </form>
             </Card>
 
-            {/* Variants Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-gray-900">
-                  Variants ({variants.length})
-                </h2>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="bg-white hover:bg-gray-50 text-pink-600 border-pink-300 h-8 text-sm"
-                  onClick={addVariant}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1.5" />
-                  Add Variant
-                </Button>
-              </div>
+            {/* Variants Section - Only show after category selection */}
+            {form.state.values.category && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Variants ({variants.length})
+                  </h2>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-white hover:bg-gray-50 text-pink-600 border-pink-300 h-8 text-sm"
+                    onClick={addVariant}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                    Add Variant
+                  </Button>
+                </div>
 
-              {variants.map((variant, index) => (
-                <VariantCard
-                  key={variant.id}
-                  variant={variant}
-                  index={index}
-                  productName={form.state.values.productName}
-                  onUpdate={updateVariant}
-                  onRemove={removeVariant}
-                  onMultipleImagesUpload={handleMultipleImagesUpload}
-                  onImageRemove={handleImageRemove}
-                  uploadingImages={uploadingImages}
-                />
-              ))}
-            </div>
+                {variants.map((variant, index) => (
+                  <VariantCard
+                    key={variant.id}
+                    variant={variant}
+                    index={index}
+                    productName={form.state.values.productName}
+                    category={form.state.values.category}
+                    onUpdate={updateVariant}
+                    onRemove={removeVariant}
+                    onMultipleImagesUpload={handleMultipleImagesUpload}
+                    onImageRemove={handleImageRemove}
+                    uploadingImages={uploadingImages}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Show message when no category selected */}
+            {!form.state.values.category && (
+              <Card className="p-8 bg-gray-50 border-2 border-dashed border-gray-300">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-200 flex items-center justify-center">
+                    <ShoppingBag className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-1">
+                    Select a Category First
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Please select a category above to start adding product variants
+                  </p>
+                </div>
+              </Card>
+            )}
 
             {/* Save Product Button (bottom) */}
             <Card className="p-4 bg-white flex justify-end">
@@ -1500,6 +1710,7 @@ const NewAddEditProductPage = () => {
               productName={form.state.values.productName}
               brand={form.state.values.brand}
               category={form.state.values.category}
+              subCategory={form.state.values.subCategory}
               description={description}
               variants={variants}
             />
