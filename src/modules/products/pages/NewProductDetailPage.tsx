@@ -1,14 +1,11 @@
 import { useState, useCallback, useEffect, useMemo, memo } from "react";
-import { useNavigate, useParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Heart, ShoppingBag, Star, ArrowLeft, Edit, Trash2 } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
-import { getProductById } from "@/http/Services/all";
-import { Spinner } from "@/components/ui/spinner";
 
 interface ProductVariant {
   id: string;
@@ -19,22 +16,91 @@ interface ProductVariant {
   images: string[];
 }
 
-interface ProductApiResponse {
-  _id: string;
-  name: string;
-  price: number;
-  discountPercent?: number;
-  stock?: number;
-  sizes?: string[];
-  isActive?: boolean;
-  category?: string;
-  subCategory?: string;
-  images?: string[];
-  colors?: string[];
-  description?: string;
-  brand?: string;
-  averageRating?: number;
-}
+// Dummy product data
+const DUMMY_PRODUCT_DATA = {
+  productName: "SZN",
+  brand: "Tata",
+  category: "Lehenga",
+  subCategory: "Bridal Lehenga",
+  pattern: "printed",
+  sleeveType: "full-sleeve",
+  fabric: "cotton",
+  neckType: "v-neck",
+  rating: 4.5,
+  isProductVisible: true,
+  markASFeatured: true,
+  description: "<p><strong>BEST OFFERS</strong></p><p><strong>Best Price: Rs. 848</strong></p><ul><li data-list-item-id=\"e3b2c5d56e0c08031ec946c1f2be1537d\">Applicable on: Orders above Rs. 750 (only on first purchase)</li><li data-list-item-id=\"ee1a571dda4d8a4cf4909843f3ca46092\">Coupon code: <strong>MYNTRASAVE</strong></li><li data-list-item-id=\"e3f050999dcb8a543e0832a7778b09c04\">Coupon Discount: 30% off (Your total saving: Rs. 5151)</li></ul><p><a href=\"https://www.myntra.com/online-fashion-store\"><strong>View Eligible Products</strong></a></p><p><strong>10% Instant Discount on Canara Bank Credit Card &amp; Credit Card EMI</strong></p><ul><li data-list-item-id=\"efa619f55a4e720ef79e1c898dc87d0d5\">Min Spend ₹3,500, Max Discount ₹1,000</li></ul><p><a href=\"https://www.myntra.com/shop/maxxsale\"><strong>Terms &amp; Condition</strong></a></p><p><strong>10% Instant Discount on HSBC Credit Card &amp; Debit Card</strong></p><ul><li data-list-item-id=\"e37b807d0d077b461e56d18626748c1b2\">Min Spend ₹3,500, Max Discount ₹1,000</li></ul><p><a href=\"https://www.myntra.com/shop/maxxsale\"><strong>Terms &amp; Condition</strong></a></p>",
+  variants: [
+    {
+      id: "1ea4112d-051a-433c-bd1c-585e39a17872",
+      color: "red",
+      sellingPrice: "400",
+      mrp: "600",
+      sizes: {
+        S: {
+          selected: true,
+          stock: "10"
+        },
+        XXL: {
+          selected: true,
+          stock: "12"
+        }
+      },
+      images: [
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804419/pr8kzmo0f3f5ealrnvs9.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804419/tie0jzpxirfwtx46k2hr.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804420/rzxdsajqwi2hqbc6rfwv.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804429/ciwtqdjdkeu1jll2cxy5.jpg"
+      ]
+    },
+    {
+      id: "6a308a25-5aeb-4dd8-a91d-3037a6ff57f8",
+      color: "Yellow",
+      sellingPrice: "800",
+      mrp: "1000",
+      sizes: {
+        M: {
+          selected: true,
+          stock: "3"
+        },
+        XS: {
+          selected: true,
+          stock: "5"
+        },
+        XL: {
+          selected: true,
+          stock: "14"
+        }
+      },
+      images: [
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804473/ajkarawb6bo6w89jvaan.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804474/hkl2j4isjqm2gxu9ekpt.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804474/hpc5bxoh17nxq5tfup2a.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804476/iyuytepvejjghajlob1e.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804477/nyi8zl7p8eiavn4dvei3.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804478/kwwoo1jczwjasmcng29g.jpg",
+        "https://res.cloudinary.com/dhgylinef/image/upload/v1770804479/ef0f4ingwfmxaxrynxhr.jpg"
+      ]
+    }
+  ],
+  allImages: [
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804419/pr8kzmo0f3f5ealrnvs9.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804419/tie0jzpxirfwtx46k2hr.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804420/rzxdsajqwi2hqbc6rfwv.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804429/ciwtqdjdkeu1jll2cxy5.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804473/ajkarawb6bo6w89jvaan.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804474/hkl2j4isjqm2gxu9ekpt.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804474/hpc5bxoh17nxq5tfup2a.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804476/iyuytepvejjghajlob1e.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804477/nyi8zl7p8eiavn4dvei3.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804478/kwwoo1jczwjasmcng29g.jpg",
+    "https://res.cloudinary.com/dhgylinef/image/upload/v1770804479/ef0f4ingwfmxaxrynxhr.jpg"
+  ],
+  allColors: ["red", "Yellow"],
+  allSizes: ["S", "XXL", "M", "XS", "XL"],
+  avgPrice: 600,
+  totalStock: 44
+};
 
 // Memoized Image Slider Component
 const ImageSlider = memo(({ images }: { images: string[] }) => {
@@ -166,59 +232,11 @@ ImageSlider.displayName = "ImageSlider";
 
 const NewProductDetailPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
 
-  // Fetch product by ID
-  const {
-    data: productResponse,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["product", id],
-    queryFn: async () => {
-      const res = await getProductById(id!);
-      return (res as { data?: ProductApiResponse }).data ?? res;
-    },
-    enabled: Boolean(id),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const product = productResponse as ProductApiResponse | undefined;
-
-  // Convert API response to variant format for display
-  const variants: ProductVariant[] = useMemo(() => {
-    if (!product) return [];
-    
-    // If product has colors array, create variants
-    if (product.colors && product.colors.length > 0) {
-      return product.colors.map((color, idx) => ({
-        id: `variant-${idx}`,
-        color: color,
-        sellingPrice: product.price?.toString() || "0",
-        mrp: product.price?.toString() || "0",
-        sizes: (product.sizes || []).reduce((acc, size) => ({
-          ...acc,
-          [size]: { selected: true, stock: "10" }
-        }), {} as Record<string, { selected: boolean; stock: string }>),
-        images: product.images || []
-      }));
-    }
-    
-    // Default single variant
-    return [{
-      id: "variant-0",
-      color: "Default",
-      sellingPrice: product.price?.toString() || "0",
-      mrp: product.price?.toString() || "0",
-      sizes: (product.sizes || []).reduce((acc, size) => ({
-        ...acc,
-        [size]: { selected: true, stock: "10" }
-      }), {} as Record<string, { selected: boolean; stock: string }>),
-      images: product.images || []
-    }];
-  }, [product]);
+  // Use dummy data (no API call)
+  const product = DUMMY_PRODUCT_DATA;
+  const variants: ProductVariant[] = product.variants;
 
   const selectedVariant = variants[selectedVariantIndex] || variants[0];
 
@@ -260,8 +278,8 @@ const NewProductDetailPage = () => {
 
   const hasMultipleVariants = variants.length > 1 && variants.some((v) => v.color);
 
-  // Calculate average rating (mock for preview)
-  const averageRating = product?.averageRating || 4.5;
+  // Get rating from dummy data
+  const averageRating = product.rating;
   const ratingCount = 147;
 
   // Get selected sizes from current variant
@@ -272,42 +290,15 @@ const NewProductDetailPage = () => {
     : [];
 
   const handleEdit = () => {
-    navigate(`/products/edit/${id}`);
+    navigate(`/products/edit/1`); // Static ID since we're using dummy data
   };
 
   const handleDelete = () => {
-    // TODO: Implement delete functionality
     if (window.confirm("Are you sure you want to delete this product?")) {
-      console.log("Delete product:", id);
+      console.log("Delete product - dummy data");
+      navigate("/products");
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Spinner className="size-8" />
-          <p className="text-sm text-gray-600">Loading product...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isError || !product) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-3xl mx-auto space-y-4">
-          <p className="text-red-600 font-medium">
-            {(error as { response?: { data?: { message?: string } } })
-              ?.response?.data?.message ?? "Failed to load product"}
-          </p>
-          <Button variant="outline" onClick={() => navigate("/products")}>
-            Back to Products
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -324,7 +315,7 @@ const NewProductDetailPage = () => {
             </button>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Product Details</h1>
-              <p className="text-sm text-gray-500">{product.name}</p>
+              <p className="text-sm text-gray-500">{product.productName}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -358,39 +349,49 @@ const NewProductDetailPage = () => {
           {/* Right Side - Product Info */}
           <div className="space-y-5">
             <Card className="p-6 bg-white">
+              {/* Rating at the top */}
+              <div className="flex items-center gap-3 border-b border-gray-200 pb-4 mb-4">
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={cn(
+                        "w-5 h-5",
+                        star <= Math.floor(averageRating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : star - 0.5 <= averageRating
+                          ? "fill-yellow-200 text-yellow-400"
+                          : "fill-gray-200 text-gray-300"
+                      )}
+                    />
+                  ))}
+                  <span className="ml-2 font-semibold text-lg text-gray-900">
+                    {averageRating}
+                  </span>
+                </div>
+                <span className="text-sm text-gray-500">
+                  ({ratingCount.toLocaleString()} ratings)
+                </span>
+              </div>
+
               {/* Brand and Name */}
               <div className="mb-4">
                 <h3 className="text-lg font-bold text-gray-900 mb-1">
-                  {product.brand || "Brand Name"}
+                  {product.brand}
                 </h3>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {product.name || "Product Name"}
+                  {product.productName}
                 </h2>
               </div>
 
               {/* Category and Sub-Category */}
               <div className="flex gap-2 mb-4">
-                {product.category && (
-                  <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 px-3 py-1 text-xs font-medium">
-                    {product.category}
-                  </Badge>
-                )}
-                {product.subCategory && (
-                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 px-3 py-1 text-xs font-medium">
-                    {product.subCategory}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Rating */}
-              <div className="flex items-center gap-3 border-b border-gray-200 pb-3 mb-4">
-                <div className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded">
-                  <span className="font-semibold text-sm">{averageRating}</span>
-                  <Star className="w-3 h-3 fill-white" />
-                </div>
-                <span className="text-sm text-gray-600">
-                  {ratingCount.toLocaleString()} Ratings
-                </span>
+                <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 px-3 py-1 text-xs font-medium">
+                  {product.category}
+                </Badge>
+                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 px-3 py-1 text-xs font-medium">
+                  {product.subCategory}
+                </Badge>
               </div>
 
               {/* Price */}
@@ -577,17 +578,48 @@ const NewProductDetailPage = () => {
               </div>
 
               {/* Product Details */}
-              {product.description && (
-                <div className="border-t border-gray-200 pt-4 space-y-2">
-                  <h4 className="text-sm font-semibold text-gray-700 uppercase">
-                    Product Details
-                  </h4>
-                  <div
-                    className="text-sm text-gray-600 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: product.description }}
-                  />
+              <div className="border-t border-gray-200 pt-4 space-y-2 mb-4">
+                <h4 className="text-sm font-semibold text-gray-700 uppercase">
+                  Product Details
+                </h4>
+                <div
+                  className="text-sm text-gray-600 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              </div>
+
+              {/* Product Specifications */}
+              <div className="border-t border-gray-200 pt-4 space-y-2">
+                <h4 className="text-sm font-semibold text-gray-700 uppercase mb-3">
+                  Specifications
+                </h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Fabric:</span>
+                    <span className="font-medium text-gray-900">{product.fabric}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Pattern:</span>
+                    <span className="font-medium text-gray-900">{product.pattern}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Neck Type:</span>
+                    <span className="font-medium text-gray-900">{product.neckType}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Sleeve:</span>
+                    <span className="font-medium text-gray-900">{product.sleeveType}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Total Stock:</span>
+                    <span className="font-medium text-gray-900">{product.totalStock}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Colors:</span>
+                    <span className="font-medium text-gray-900">{product.allColors.join(", ")}</span>
+                  </div>
                 </div>
-              )}
+              </div>
             </Card>
           </div>
         </div>

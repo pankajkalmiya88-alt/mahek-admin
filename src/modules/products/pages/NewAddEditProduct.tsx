@@ -675,16 +675,18 @@ const NewAddEditProductPage = () => {
         return;
       }
 
-      // Validate neck type
-      if (!value.neckType || value.neckType.trim() === "") {
-        showError("Neck Type is required");
-        return;
-      }
+      // Validate neck type (not required for Saree)
+      if (value.category !== "Saree") {
+        if (!value.neckType || value.neckType.trim() === "") {
+          showError("Neck Type is required");
+          return;
+        }
 
-      // Validate sleeve type
-      if (!value.sleeveType || value.sleeveType.trim() === "") {
-        showError("Sleeve Type is required");
-        return;
+        // Validate sleeve type (not required for Saree)
+        if (!value.sleeveType || value.sleeveType.trim() === "") {
+          showError("Sleeve Type is required");
+          return;
+        }
       }
 
       // Validate variants
@@ -1451,13 +1453,75 @@ const NewAddEditProductPage = () => {
                         }}
                       </form.Field>
                     </div>
+                    
+                    {/* Neck Type - Hide for Saree category */}
+                    {form.state.values.category !== "Saree" && (
+                      <div className="space-y-1">
+                        <form.Field
+                          name="neckType"
+                          validators={{
+                            onChange: z
+                              .string()
+                              .min(1, "Neck Type is required")
+                              .trim(),
+                          }}
+                        >
+                          {(field) => {
+                            const isInvalid =
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0;
+                            return (
+                              <Field data-invalid={isInvalid}>
+                                <FieldLabel
+                                  htmlFor="neckType"
+                                  className="text-xs"
+                                >
+                                  Neck Type{" "}
+                                  <span className="text-red-500">*</span>
+                                </FieldLabel>
+                                <Select
+                                  value={field.state.value}
+                                  onValueChange={(value) => {
+                                    field.handleChange(value);
+                                    field.handleBlur();
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 text-sm">
+                                    <SelectValue placeholder="Select neck type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="v-neck">V-Neck</SelectItem>
+                                    <SelectItem value="round">Round</SelectItem>
+                                    <SelectItem value="collar">Collar</SelectItem>
+                                    <SelectItem value="boat">Boat</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {isInvalid && (
+                                  <FieldError
+                                    errors={field.state.meta.errors.map((err) =>
+                                      typeof err === "string"
+                                        ? { message: err }
+                                        : err,
+                                    )}
+                                  />
+                                )}
+                              </Field>
+                            );
+                          }}
+                        </form.Field>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sleeve Type - Hide for Saree category */}
+                  {form.state.values.category !== "Saree" && (
                     <div className="space-y-1">
                       <form.Field
-                        name="neckType"
+                        name="sleeveType"
                         validators={{
                           onChange: z
                             .string()
-                            .min(1, "Neck Type is required")
+                            .min(1, "Sleeve Type is required")
                             .trim(),
                         }}
                       >
@@ -1468,10 +1532,10 @@ const NewAddEditProductPage = () => {
                           return (
                             <Field data-invalid={isInvalid}>
                               <FieldLabel
-                                htmlFor="neckType"
+                                htmlFor="sleeveType"
                                 className="text-xs"
                               >
-                                Neck Type{" "}
+                                Sleeve Type{" "}
                                 <span className="text-red-500">*</span>
                               </FieldLabel>
                               <Select
@@ -1482,13 +1546,21 @@ const NewAddEditProductPage = () => {
                                 }}
                               >
                                 <SelectTrigger className="h-8 text-sm">
-                                  <SelectValue placeholder="Select neck type" />
+                                  <SelectValue placeholder="Select sleeve type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="v-neck">V-Neck</SelectItem>
-                                  <SelectItem value="round">Round</SelectItem>
-                                  <SelectItem value="collar">Collar</SelectItem>
-                                  <SelectItem value="boat">Boat</SelectItem>
+                                  <SelectItem value="half-sleeve">
+                                    Half Sleeve
+                                  </SelectItem>
+                                  <SelectItem value="full-sleeve">
+                                    Full Sleeve
+                                  </SelectItem>
+                                  <SelectItem value="sleeveless">
+                                    Sleeveless
+                                  </SelectItem>
+                                  <SelectItem value="3/4-sleeve">
+                                    3/4 Sleeve
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                               {isInvalid && (
@@ -1505,71 +1577,7 @@ const NewAddEditProductPage = () => {
                         }}
                       </form.Field>
                     </div>
-                  </div>
-
-                  {/* Sleeve Type */}
-                  <div className="space-y-1">
-                    <form.Field
-                      name="sleeveType"
-                      validators={{
-                        onChange: z
-                          .string()
-                          .min(1, "Sleeve Type is required")
-                          .trim(),
-                      }}
-                    >
-                      {(field) => {
-                        const isInvalid =
-                          field.state.meta.isTouched &&
-                          field.state.meta.errors.length > 0;
-                        return (
-                          <Field data-invalid={isInvalid}>
-                            <FieldLabel
-                              htmlFor="sleeveType"
-                              className="text-xs"
-                            >
-                              Sleeve Type{" "}
-                              <span className="text-red-500">*</span>
-                            </FieldLabel>
-                            <Select
-                              value={field.state.value}
-                              onValueChange={(value) => {
-                                field.handleChange(value);
-                                field.handleBlur();
-                              }}
-                            >
-                              <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Select sleeve type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="half-sleeve">
-                                  Half Sleeve
-                                </SelectItem>
-                                <SelectItem value="full-sleeve">
-                                  Full Sleeve
-                                </SelectItem>
-                                <SelectItem value="sleeveless">
-                                  Sleeveless
-                                </SelectItem>
-                                <SelectItem value="3/4-sleeve">
-                                  3/4 Sleeve
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            {isInvalid && (
-                              <FieldError
-                                errors={field.state.meta.errors.map((err) =>
-                                  typeof err === "string"
-                                    ? { message: err }
-                                    : err,
-                                )}
-                              />
-                            )}
-                          </Field>
-                        );
-                      }}
-                    </form.Field>
-                  </div>
+                  )}
 
                   {/* Description with CKEditor */}
                   <div className="space-y-1">
