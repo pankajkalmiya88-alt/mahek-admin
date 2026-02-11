@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Search, Plus, Eye, Edit2, Trash2, LoaderCircle } from "lucide-react";
+import { Search, Plus, Eye, Edit2, Trash2, LoaderCircle, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useStore } from "zustand";
 import { getProductsList, deleteProduct } from "@/http/Services/all";
@@ -20,6 +20,7 @@ import { ModalType } from "@/shared-component/Confirmation";
 import { showSuccess, showError } from "@/utility/utility";
 
 const ProductListPage = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const openConfirmation = useStore(confirmationStore, (s) => s.openConfirmation);
 
@@ -130,14 +131,14 @@ const ProductListPage = () => {
           )}
         </div>
         <Select defaultValue="all">
-          <SelectTrigger className="w-[150px] h-11 border-gray-300 bg-white">
-            <SelectValue placeholder="Filter" />
+          <SelectTrigger className="w-[180px] h-11 border-gray-300 bg-white">
+            <SelectValue placeholder="Filter by Category" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="men">Men</SelectItem>
-            <SelectItem value="women">Women</SelectItem>
-            <SelectItem value="kids">Kids</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="Lehenga">Lehenga</SelectItem>
+            <SelectItem value="Rajputi Poshak">Rajputi Poshak</SelectItem>
+            <SelectItem value="Saree">Saree</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -180,103 +181,151 @@ const ProductListPage = () => {
       {!isLoading && !isError && products.length > 0 && (
         <>
           <div className="grid grid-cols-5 gap-4">
-            {products.map((product: any) => (
-              <Card
-                key={product.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                {/* Product Image with Badges */}
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={product?.images && product?.images?.length && product?.images[0]  || "https://via.placeholder.com/400"}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Badges Overlay */}
-                  {product.stock === 0 && (
-                    <Badge className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1">
-                      SOLD OUT
-                    </Badge>
-                  )}
-                  {product.stock > 0 && product.stock < 10 && (
-                    <Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs px-2 py-1">
-                      Low Stock
-                    </Badge>
-                  )}
-                </div>
+            {products.map((product: any) => {
+              // Get first variant data
+              const firstVariant = product.variants?.[0];
+              const hasMultipleVariants = product.variants?.length > 1;
+              const variantImage = firstVariant?.images?.[0] || product?.allImages?.[0] || "https://via.placeholder.com/400";
+              const sellingPrice = firstVariant?.sellingPrice || product.price || 0;
+              const mrp = firstVariant?.mrp || product.price || 0;
+              const hasDiscount = mrp > sellingPrice;
 
-                {/* Product Details */}
-                <CardContent className="p-4 space-y-3">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {product.category}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-purple-600">
-                      ₹{product.price}
-                    </span>
-                    <span
-                      className={`text-xs font-medium ${
-                        product.stock === 0
-                          ? "text-red-600"
-                          : product.stock < 10
-                            ? "text-orange-600"
-                            : "text-green-600"
-                      }`}
-                    >
-                      Stock: {product.stock}
-                    </span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <Link to={`/products/detail/${product._id}`}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 px-4 text-xs font-medium border-gray-300 hover:bg-gray-50"
-                      >
-                        View
-                      </Button>
-                    </Link>
-                    <div className="flex items-center gap-2">
-                      <Link to={`/products/edit-product/${product?._id}`}>
-                      <Button 
-                        size="icon-sm"
-                        className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
-                        >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                        </Link>
-                      <Button
-                        size="icon-sm"
-                        className="h-8 w-8 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon-sm"
-                        className="h-8 w-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
-                        onClick={() => handleDeleteProduct(product)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        {deleteMutation.isPending &&
-                        deleteMutation.variables === (product._id ?? product.id) ? (
-                          <LoaderCircle className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </Button>
+              return (
+                <Card
+                  key={product.id}
+                  className="overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  {/* Product Image with Badges */}
+                  <div className="relative h-56 overflow-hidden bg-white border-b">
+                    <div className="w-full h-full flex items-center justify-center p-3">
+                      <img
+                        src={variantImage}
+                        alt={product.name}
+                        className="max-w-full max-h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://via.placeholder.com/400?text=No+Image";
+                        }}
+                      />
                     </div>
+                    {/* Stock Badges */}
+                    {product.totalStock === 0 && (
+                      <Badge className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1">
+                        SOLD OUT
+                      </Badge>
+                    )}
+                    {product.totalStock > 0 && product.totalStock < 10 && (
+                      <Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs px-2 py-1">
+                        Low Stock
+                      </Badge>
+                    )}
+                    {/* Multiple Variants Button - Icon Only */}
+                    {hasMultipleVariants && (
+                      <button
+                        onClick={() => navigate(`/products/detail/${product._id}`)}
+                        className="group absolute bottom-3 right-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 transition-all shadow-md hover:shadow-lg"
+                        title="More Variant"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                        <span className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          More Variant
+                        </span>
+                      </button>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+
+                  {/* Product Details */}
+                  <CardContent className="p-4 space-y-2.5">
+                    {/* Category */}
+                    <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs px-2 py-0.5">
+                      {product.category || "Uncategorized"}
+                    </Badge>
+
+                    {/* Product Name */}
+                    <div>
+                      <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-tight">
+                        {product.name}
+                      </h3>
+                    </div>
+
+                    {/* Brand */}
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium text-gray-700">Brand:</span>{" "}
+                      <span>{product.brand || "N/A"}</span>
+                    </div>
+
+                    {/* Price Section */}
+                    <div className="space-y-1 pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base font-bold text-green-600">
+                          ₹{sellingPrice}
+                        </span>
+                        {hasDiscount && (
+                          <>
+                            <span className="text-xs text-gray-400 line-through">
+                              ₹{mrp}
+                            </span>
+                            <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 text-xs px-1.5 py-0">
+                              {Math.round(((mrp - sellingPrice) / mrp) * 100)}% OFF
+                            </Badge>
+                          </>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Stock: {" "}
+                        <span
+                          className={`font-medium ${
+                            product.totalStock === 0
+                              ? "text-red-600"
+                              : product.totalStock < 10
+                                ? "text-orange-600"
+                                : "text-green-600"
+                          }`}
+                        >
+                          {product.totalStock || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <Link to={`/products/detail/${product._id}`}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-4 text-xs font-medium border-gray-300 hover:bg-gray-50"
+                        >
+                          <Eye className="w-3 h-3 mr-1.5" />
+                          View
+                        </Button>
+                      </Link>
+                      <div className="flex items-center gap-1.5">
+                        <Link to={`/products/edit-product/${product?._id}`}>
+                          <Button 
+                            size="icon-sm"
+                            className="h-7 w-7 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </Link>
+                        <Button
+                          size="icon-sm"
+                          className="h-7 w-7 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                          onClick={() => handleDeleteProduct(product)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables === (product._id ?? product.id) ? (
+                            <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Pagination Section */}
