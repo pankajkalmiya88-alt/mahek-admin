@@ -15,7 +15,7 @@ interface ProductVariant {
   images: string[];
 }
 
-interface NewProductPreviewProps {
+interface ProductPreviewProps {
   productName: string;
   brand: string;
   category: string;
@@ -152,14 +152,14 @@ const ImageSlider = memo(({ images }: { images: string[] }) => {
 
 ImageSlider.displayName = "ImageSlider";
 
-const NewProductPreview = ({
+const ProductPreview = ({
   productName,
   brand,
   category,
   subCategory,
   description,
   variants,
-}: NewProductPreviewProps) => {
+}: ProductPreviewProps) => {
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
 
   // Memoize calculations
@@ -381,7 +381,7 @@ const NewProductPreview = ({
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
+            {/* <div className="flex gap-3 pt-2">
               <Button className="flex-1 h-12 bg-pink-600 hover:bg-pink-700 text-white font-semibold text-base">
                 <ShoppingBag className="w-5 h-5 mr-2" />
                 ADD TO BAG
@@ -392,7 +392,7 @@ const NewProductPreview = ({
               >
                 <Heart className="w-5 h-5 text-gray-700" />
               </Button>
-            </div>
+            </div> */}
 
             {/* Delivery Information */}
             <div className="border border-gray-200 rounded-lg p-4 space-y-2">
@@ -503,4 +503,4 @@ const NewProductPreview = ({
   );
 };
 
-export default memo(NewProductPreview);
+export default memo(ProductPreview);

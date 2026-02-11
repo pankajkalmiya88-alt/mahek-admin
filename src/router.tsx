@@ -27,16 +27,11 @@ const ProductListPage = lazy(
 const AddEditProductPage = lazy(
   () => import("./modules/products/pages/AddEditProductPage"),
 );
-const NewAddEditProductPage = lazy(
-  () => import("./modules/products/pages/NewAddEditProduct"),
-);
+
 const ProductDetailPage = lazy(
   () => import("./modules/products/pages/ProductDetailPage"),
 );
 
-const NewProductDetailPage = lazy(
-  () => import("./modules/products/pages/NewProductDetailPage"),
-);
 
 
 
@@ -102,12 +97,12 @@ export const router = createBrowserRouter([
           { path: "detail/:id", element: withSuspense(ProductDetailPage) },
 
 
-          { path: "new-add-product", element: withSuspense(NewAddEditProductPage) },
-          {
-            path: "new-edit-product/:id",
-            element: withSuspense(NewAddEditProductPage),
-          },
-          { path: "new-detail/:id", element: withSuspense(NewProductDetailPage) },
+          // { path: "new-add-product", element: withSuspense(NewAddEditProductPage) },
+          // {
+          //   path: "new-edit-product/:id",
+          //   element: withSuspense(NewAddEditProductPage),
+          // },
+          // { path: "new-detail/:id", element: withSuspense(NewProductDetailPage) },
         ],
       },
 

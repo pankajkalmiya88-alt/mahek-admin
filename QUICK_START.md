@@ -19,7 +19,7 @@ I've successfully created a **complete Myntra-style product variant management s
 - **Form Validations**: All required fields validated
 - **Responsive Layout**: Works on all screen sizes
 
-### 2. Live Preview Page (`NewProductPreview.tsx`)
+### 2. Live Preview Page (`ProductPreview.tsx`)
 - **E-Commerce View**: Shows exactly how customers will see the product
 - **Image Slider**: 
   - Smooth Embla carousel

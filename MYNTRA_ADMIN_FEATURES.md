@@ -7,7 +7,7 @@ This implementation provides a complete **Myntra-style product variant managemen
 ## 📁 Files Created
 
 1. **`src/modules/products/pages/NewAddEditProduct.tsx`** - Main product form with variant management
-2. **`src/modules/products/pages/NewProductPreview.tsx`** - Live preview with image slider
+2. **`src/modules/products/pages/ProductPreview.tsx`** - Live preview with image slider
 
 ## 🚀 Features Implemented
 
@@ -187,7 +187,7 @@ Navigate to:
 ```
 src/modules/products/pages/
 ├── NewAddEditProduct.tsx      // Main form component
-└── NewProductPreview.tsx      // Preview component
+└── ProductPreview.tsx      // Preview component
 ```
 
 ### Key Components
@@ -203,7 +203,7 @@ src/modules/products/pages/
    - Thumbnail navigation
    - Smooth transitions
 
-3. **NewProductPreview**
+3. **ProductPreview**
    - E-commerce style product display
    - Real-time data binding
    - Responsive layout

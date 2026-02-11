@@ -143,7 +143,7 @@
 - Color: Orange (#F97316)
 - Font: White, semibold, extra-small
 
-**Location:** Lines 340-349 in NewProductPreview.tsx
+**Location:** Lines 340-349 in ProductPreview.tsx
 
 **Visual Example:**
 ```
@@ -296,7 +296,7 @@ Any invalid? → Show error + Block submit
    - Enhanced validations
    - Improved image upload system
 
-2. **src/modules/products/pages/NewProductPreview.tsx** (377 lines)
+2. **src/modules/products/pages/ProductPreview.tsx** (377 lines)
    - Added stock badges on size buttons
    - Minor improvements
 
