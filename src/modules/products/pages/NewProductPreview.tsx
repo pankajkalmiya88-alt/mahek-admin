@@ -215,12 +215,12 @@ const NewProductPreview = ({
     : [];
 
   return (
-    <Card className="bg-white sticky top-24 overflow-hidden">
+    <Card className="bg-white sticky overflow-hidden">
       <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
           <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Live Preview — E-Commerce View
+            Live Preview — Product View
           </span>
         </div>
       </div>

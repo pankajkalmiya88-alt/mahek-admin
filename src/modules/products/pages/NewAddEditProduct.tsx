@@ -1085,41 +1085,6 @@ const NewAddEditProductPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 sticky top-0 z-10">
-        <div className="max-w-[1800px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              onClick={() => navigate("/products")}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-xs text-gray-500">
-                {isEditMode ? "Edit Product" : "Add New Product"}
-              </p>
-            </div>
-          </div>
-          <Button
-            type="button"
-            onClick={() => form.handleSubmit()}
-            disabled={mutation.isPending}
-            className="bg-pink-600 hover:bg-pink-700 text-white px-6 h-9 text-sm"
-          >
-            {mutation.isPending ? (
-              <>
-                <Spinner className="mr-2 size-3.5" />
-                Saving...
-              </>
-            ) : (
-              "Save"
-            )}
-          </Button>
-        </div>
-      </div>
 
       {/* Main Content */}
       <div className="max-w-[1800px] mx-auto p-4">
