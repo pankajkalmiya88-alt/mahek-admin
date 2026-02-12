@@ -68,3 +68,12 @@ export const deleteProduct = async (id: string) => api.delete(`products/delete/$
  */
 export const getUsersList = async (queryString = '') => api.get(`admin/auth/users/${queryString}`);
 
+
+// Get DashBoard Data Start
+/**
+ * Fetches a Dashboard pages using the provided query string.
+ *
+ * @param {string} [queryString] - Optional query string beginning with `?`.
+ */
+export const getDashBoardData = async (queryString = '') => api.get(`admin/auth/dashboard/${queryString}`);
+
