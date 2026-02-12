@@ -1,7 +1,7 @@
 import { api } from '@/http/api';
 
 /**
- * Fetches a list of SEO service pages using the provided query string.
+ * Fetches a list of Products pages using the provided query string.
  *
  * @param {string} [queryString] - Optional query string beginning with `?`.
  */
@@ -56,4 +56,15 @@ export const updateProduct = async (id: string, payload: any) => api.put(`produc
  * @returns A promise that resolves with the API response after successful deletion.
  */
 export const deleteProduct = async (id: string) => api.delete(`products/delete/${id}`);
+
+
+
+// Users APIs Start
+
+/**
+ * Fetches a list of Users pages using the provided query string.
+ *
+ * @param {string} [queryString] - Optional query string beginning with `?`.
+ */
+export const getUsersList = async (queryString = '') => api.get(`admin/auth/users/${queryString}`);
 
