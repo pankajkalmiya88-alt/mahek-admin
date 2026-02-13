@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Package, ShoppingCart, DollarSign, TrendingUp, AlertCircle, MessageSquare, IndianRupee } from "lucide-react";
+import { Users, Package, ShoppingCart, TrendingUp, AlertCircle, MessageSquare, IndianRupee } from "lucide-react";
 import { getDashBoardData } from "@/http/Services/all";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
