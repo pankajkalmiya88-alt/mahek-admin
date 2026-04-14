@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Package,
-  ShoppingBag,
   ShoppingCart,
   Users,
   type LucideIcon,

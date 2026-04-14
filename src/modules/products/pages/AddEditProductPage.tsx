@@ -1304,20 +1304,6 @@ const AddEditProductPage = () => {
 
       // Prepare payload
       const allImages = variants.flatMap((v) => v.images);
-      const allColors = variants.map((v) => v.color);
-      
-      // For Saree category, use "ONE SIZE", otherwise collect selected sizes
-      const allSizes = isSareeFlow
-        ? ["ONE SIZE"]
-        : Array.from(
-            new Set(
-              variants.flatMap((v) =>
-                Object.entries(v.sizes)
-                  .filter(([, data]) => data.selected)
-                  .map(([size]) => size),
-              ),
-            ),
-          );
 
       // Calculate average price
       const avgPrice =
@@ -1325,16 +1311,6 @@ const AddEditProductPage = () => {
           (sum, v) => sum + parseFloat(v.sellingPrice || "0"),
           0,
         ) / variants.length;
-
-      // Calculate total stock
-      const totalStock = variants.reduce((sum, v) => {
-        return (
-          sum +
-          Object.entries(v.sizes)
-          .filter(([, data]) => data.selected)
-          .reduce((vSum, [, data]) => vSum + (parseInt(data.stock) || 0), 0)
-        );
-      }, 0);
       
       const isFeatured =
         typeof value.isFeatured === "boolean"
