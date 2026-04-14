@@ -274,9 +274,10 @@ const normalizeSizes = (
   category: string,
 ): Record<string, { selected: boolean; stock: string }> => {
   const isSareeFlow = isSareeCategory(category);
-  const fallback = isSareeFlow
-    ? { ONE_SIZE: { selected: true, stock: "" } }
-    : {};
+  const fallback: Record<string, { selected: boolean; stock: string }> =
+    isSareeFlow
+      ? { ONE_SIZE: { selected: true, stock: "" } }
+      : {};
 
   if (Array.isArray(rawSizes)) {
     const parsed = rawSizes.reduce(
