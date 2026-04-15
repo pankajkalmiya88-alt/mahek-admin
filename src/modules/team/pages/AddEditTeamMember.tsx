@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ChangeEvent } from "react";
 import { ArrowLeft, Upload, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Card } from "@/components/ui/card";
@@ -14,32 +14,32 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
+import {
+  ALL_PERMISSIONS,
+  PERMISSIONS,
+  ROLE_OPTIONS,
+  ROLES_PERMISSIONS,
+  buildPermissionState,
+  createPermission,
+  createRbacPayload,
+  hasAtLeastOnePermission,
+  type Action,
+  type Module,
+  type PermissionState,
+  type Role,
+} from "@/rabc-control";
 
-const ROLE_OPTIONS = [
-  { _id: 1, role: "Super Admin" },
-  { _id: 2, role: "Admin" },
-  { _id: 3, role: "Manager" },
-  { _id: 4, role: "User" },
-] as const;
-
-const DEFAULT_PERMISSIONS = {
-  dashboard: { view: true },
-  products: { view: true, create: true, edit: true, delete: true },
-  users: { view: true, create: true, edit: false, delete: false },
-  orders: { view: true, update: true, delete: false },
-  teams: { view: false, create: false, edit: false, delete: false },
-};
-
-type Permissions = typeof DEFAULT_PERMISSIONS;
 type FormValues = {
   fullName: string;
   email: string;
   phoneNumber: string;
-  role: string;
-  permissions: Permissions;
+  role: Role | "";
+  permissions: PermissionState;
 };
 
-type FormErrors = Partial<Record<"fullName" | "email" | "phoneNumber" | "role" | "image", string>>;
+type FormErrors = Partial<
+  Record<"fullName" | "email" | "phoneNumber" | "role" | "image" | "permissions", string>
+>;
 
 const AddEditTeamMember = () => {
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ const AddEditTeamMember = () => {
     email: "",
     phoneNumber: "",
     role: "",
-    permissions: DEFAULT_PERMISSIONS,
+    permissions: buildPermissionState(ALL_PERMISSIONS, []),
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -62,12 +62,24 @@ const AddEditTeamMember = () => {
   const headerTitle = isEditMode ? "Edit Team Member" : "Add Team Member";
   const submitLabel = isEditMode ? "Update Member" : "Save Member";
 
-  const selectedRoleLabel = useMemo(
-    () => ROLE_OPTIONS.find((item) => item._id.toString() === values.role)?.role ?? "",
-    [values.role],
-  );
+  const selectedRoleLabel = useMemo(() => {
+    if (!values.role) return "";
+    return ROLE_OPTIONS.find((item) => item.value === values.role)?.role ?? "";
+  }, [values.role]);
 
-  const handleFieldChange = (key: keyof Omit<FormValues, "permissions">, nextValue: string) => {
+  const handleRoleChange = (nextRole: Role) => {
+    setValues((prev) => ({
+      ...prev,
+      role: nextRole,
+      permissions: buildPermissionState(ALL_PERMISSIONS, ROLES_PERMISSIONS[nextRole]),
+    }));
+    setErrors((prev) => ({ ...prev, role: "", permissions: "" }));
+  };
+
+  const handleFieldChange = (
+    key: keyof Pick<FormValues, "fullName" | "email" | "phoneNumber">,
+    nextValue: string,
+  ) => {
     setValues((prev) => ({ ...prev, [key]: nextValue }));
     setErrors((prev) => ({ ...prev, [key]: "" }));
   };
@@ -77,24 +89,15 @@ const AddEditTeamMember = () => {
     handleFieldChange("phoneNumber", cleaned);
   };
 
-  const handlePermissionToggle = (
-    moduleKey: keyof Permissions,
-    actionKey: string,
-    checked: boolean,
-  ) => {
+  const handlePermissionToggle = (permission: ReturnType<typeof createPermission>, checked: boolean) => {
     setValues((prev) => ({
       ...prev,
-      permissions: {
-        ...prev.permissions,
-        [moduleKey]: {
-          ...prev.permissions[moduleKey],
-          [actionKey]: checked,
-        },
-      },
+      permissions: { ...prev.permissions, [permission]: checked },
     }));
+    setErrors((prev) => ({ ...prev, permissions: "" }));
   };
 
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -140,6 +143,9 @@ const AddEditTeamMember = () => {
     if (!values.role) {
       nextErrors.role = "Role is required.";
     }
+    if (!hasAtLeastOnePermission(values.permissions)) {
+      nextErrors.permissions = "Select at least one permission.";
+    }
     if (!imageFile && !isEditMode) {
       nextErrors.image = "User image is required.";
     }
@@ -151,6 +157,14 @@ const AddEditTeamMember = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateForm()) return;
+
+    const payload = createRbacPayload({
+      name: values.fullName.trim(),
+      role: values.role as Role,
+      permissions: values.permissions,
+    });
+
+    console.log("Team member payload:", payload);
 
     setIsSubmitting(true);
     // UI-only submission flow as requested.
@@ -237,7 +251,7 @@ const AddEditTeamMember = () => {
                     </FieldLabel>
                     <Select
                       value={values.role}
-                      onValueChange={(value) => handleFieldChange("role", value)}
+                      onValueChange={(value) => handleRoleChange(value as Role)}
                     >
                       <SelectTrigger
                         className={cn("h-9 text-sm", errors.role && "border-red-500")}
@@ -246,7 +260,7 @@ const AddEditTeamMember = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {ROLE_OPTIONS.map((option) => (
-                          <SelectItem key={option._id} value={option._id.toString()}>
+                          <SelectItem key={option._id} value={option.value}>
                             {option.role}
                           </SelectItem>
                         ))}
@@ -313,37 +327,39 @@ const AddEditTeamMember = () => {
               </p>
 
               <div className="space-y-4">
-                {Object.entries(values.permissions).map(([moduleName, actions]) => (
-                  <div
-                    key={moduleName}
-                    className="rounded-lg border border-gray-200 bg-gray-50 p-3"
-                  >
+                {Object.entries(PERMISSIONS).map(([moduleName, actions]) => {
+                  const moduleKey = moduleName as Module;
+                  return (
+                    <div key={moduleName} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                     <h3 className="text-sm font-semibold text-gray-800 capitalize mb-3">
                       {moduleName}
                     </h3>
                     <div className="flex flex-wrap items-center gap-5">
-                      {Object.entries(actions).map(([actionName, checked]) => (
-                        <label
-                          key={actionName}
-                          className="inline-flex items-center gap-2 text-sm text-gray-800 capitalize"
-                        >
-                          <Checkbox
-                            checked={Boolean(checked)}
-                            onCheckedChange={(nextChecked) =>
-                              handlePermissionToggle(
-                                moduleName as keyof Permissions,
-                                actionName,
-                                Boolean(nextChecked),
-                              )
-                            }
-                          />
-                          {actionName}
-                        </label>
-                      ))}
+                      {Object.entries(actions).map(([actionName]) => {
+                        const permission = createPermission(moduleKey, actionName as Action);
+                        return (
+                          <label
+                            key={actionName}
+                            className="inline-flex items-center gap-2 text-sm text-gray-800 capitalize"
+                          >
+                            <Checkbox
+                              checked={Boolean(values.permissions[permission])}
+                              onCheckedChange={(nextChecked) =>
+                                handlePermissionToggle(permission, Boolean(nextChecked))
+                              }
+                            />
+                            {actionName}
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
+              {errors.permissions && (
+                <p className="text-xs text-red-500 mt-3">{errors.permissions}</p>
+              )}
             </Card>
 
             <Card className="p-4 bg-white flex justify-end gap-2">
