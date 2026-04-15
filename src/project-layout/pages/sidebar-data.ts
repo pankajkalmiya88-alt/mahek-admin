@@ -38,13 +38,18 @@ export const sidebarData: SidebarNavItem[] = [
     icon: Users,
     isActive: true,
   },
-   {
+  {
     title: "Orders",
     url: "/orders",
     icon: ShoppingCart,
     isActive: true,
+  },
+  {
+    title: "Teams",
+    url: "/team",
+    icon: Users,
+    isActive: true,
   }
-
 ];
 
 
